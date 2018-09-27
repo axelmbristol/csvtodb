@@ -1,13 +1,12 @@
 package database;
 
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBObject;
-import com.mongodb.MongoClient;
-import com.mongodb.MongoClientURI;
+import com.mongodb.*;
 import entities.Tag;
+import org.apache.commons.collections4.IteratorUtils;
 import trikita.log.Log;
 
 import java.net.UnknownHostException;
+import java.util.*;
 
 /**
  * Created by Axel on 26/09/2018.
@@ -30,11 +29,14 @@ public class DataBase {
     private void addTagToDB(String dataBaseName, Tag tag){
         Log.d("add tag "+tag.getTagSerialNumber()+" to database "+dataBaseName);
         if(mongoClient != null){
-            mongoClient.getDB(dataBaseName).getCollection("data").insert(createTagDBObject(tag));
+            DBObject dbTagObject = createTagDBObject(tag);
+            mongoClient.getDB(dataBaseName).getCollection(dbTagObject.get("control_station").toString())
+                    .getCollection(dbTagObject.get("serial_number").toString())
+                    .getCollection(dbTagObject.get("date").toString())
+                    .insert(createTagDBObject(tag));
         }else {
             Log.e(TAG,"mongoClient is null !");
         }
-
     }
 
     private DBObject createTagDBObject(Tag tag){
@@ -43,7 +45,7 @@ public class DataBase {
                 .append("time", tag.getTime())
                 .append("control_station", tag.getControlStation())
                 .append("type_12_tag_messages", tag.getType12TagMessages())
-                .append("serial_mumber", tag.getTagSerialNumber())
+                .append("serial_number", tag.getTagSerialNumber())
                 .append("signal_strength", tag.getTagSerialNumber())
                 .append("battery_voltage", tag.getBatteryVoltage())
                 .append("first_accelerometer_counter", tag.getFirstAccelerometerCounter())
@@ -54,9 +56,38 @@ public class DataBase {
                 .append("correlation_value", tag.getCorrelationValue());
     }
 
-    private Tag getTAgFromDB(){
-        //// TODO: 26/09/2018
-        return null;
+    private Tag DBObjectToTag(DBObject dbObject){
+        return new Tag((BasicDBObject) dbObject);
+    }
+
+    private List<Tag> getTagFromDBBySerialNumber(String dataBaseName, Long serialNumber){
+        if(mongoClient != null){
+            Iterator<DBObject> it = mongoClient.getDB(dataBaseName).getCollection(serialNumber.toString()).find().iterator();
+            List<Tag> tags = new ArrayList<Tag>();
+            while(it.hasNext()){
+                tags.add(DBObjectToTag(it.next()));
+            }
+            Log.d(TAG,"getTagFromDBBySerialNumber tags="+tags);
+            return tags;
+        }else {
+            Log.e(TAG,"mongoClient is null !");
+            return Collections.emptyList();
+        }
+    }
+
+
+    private List<Tag> getTagFromDBByControlStation(String dataBaseName, Integer controlStation){
+        if(mongoClient != null){
+            Iterator<DBObject> it = mongoClient.getDB(dataBaseName).getCollection(controlStation.toString()).find().iterator();
+            List<Tag> tags = new ArrayList<Tag>();
+            while(it.hasNext()){
+                tags.add(DBObjectToTag(it.next()));
+            }
+            return tags;
+        }else {
+            Log.e(TAG,"mongoClient is null !");
+            return Collections.emptyList();
+        }
     }
 
 }

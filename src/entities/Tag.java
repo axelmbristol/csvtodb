@@ -1,7 +1,11 @@
 package entities;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
 
 /**
  * Created by Axel on 26/09/2018.
@@ -9,43 +13,43 @@ import com.google.gson.annotations.SerializedName;
  */
 public class Tag {
 
-    @SerializedName("Date")
+    @SerializedName("date")
     @Expose
     private String date;
-    @SerializedName("Time")
+    @SerializedName("time")
     @Expose
     private String time;
-    @SerializedName("Control station")
+    @SerializedName("control_station")
     @Expose
     private Integer controlStation;
-    @SerializedName("Type 12 tag messages")
+    @SerializedName("type_12_tag_messages")
     @Expose
     private Integer type12TagMessages;
-    @SerializedName("Tag serial number")
+    @SerializedName("tag_serial_number")
     @Expose
-    private Integer tagSerialNumber;
-    @SerializedName("Signal strength")
+    private Long tagSerialNumber;
+    @SerializedName("signal_strength")
     @Expose
     private String signalStrength;
-    @SerializedName("Battery voltage")
+    @SerializedName("battery_voltage")
     @Expose
     private String batteryVoltage;
-    @SerializedName("First accelerometer counter")
+    @SerializedName("first_accelerometer_counter")
     @Expose
     private String firstAccelerometerCounter;
-    @SerializedName("First sensor value")
+    @SerializedName("first_sensor_value")
     @Expose
     private Integer firstSensorValue;
-    @SerializedName("Second accelerometer counter")
+    @SerializedName("second_accelerometer_counter")
     @Expose
     private String secondAccelerometerCounter;
-    @SerializedName("Second sensor values (X-Y-Z)")
+    @SerializedName("second_sensor_values_xyz")
     @Expose
     private String secondSensorValuesXYZ;
-    @SerializedName("Correlation identifier")
+    @SerializedName("correlation_identifier")
     @Expose
     private String correlationIdentifier;
-    @SerializedName("Correlation value")
+    @SerializedName("correlation_value")
     @Expose
     private Integer correlationValue;
     @SerializedName("FIELD14")
@@ -57,6 +61,22 @@ public class Tag {
     @SerializedName("FIELD16")
     @Expose
     private Double fIELD16;
+
+    public Tag(BasicDBObject dbObject) {
+        this.date = dbObject.getString("date");
+        this.time = dbObject.getString("time");
+        this.controlStation = dbObject.getInt("control_station");
+        this.type12TagMessages = dbObject.getInt("type_12_tag_messages");
+        this.tagSerialNumber = dbObject.getLong("tag_serial_number");
+        this.signalStrength = dbObject.getString("signal_strength");
+        this.batteryVoltage = dbObject.getString("battery_voltage");
+        this.firstAccelerometerCounter = dbObject.getString("first_accelerometer_counter");
+        this.firstSensorValue = dbObject.getInt("first_sensor_value");
+        this.secondAccelerometerCounter = dbObject.getString("second_accelerometer_counter");
+        this.secondSensorValuesXYZ = dbObject.getString("second_sensor_values_xyz");
+        this.correlationIdentifier = dbObject.getString("correlation_identifier");
+        this.correlationValue = dbObject.getInt("correlation_value");
+    }
 
     public String getDate() {
         return date;
@@ -90,11 +110,11 @@ public class Tag {
         this.type12TagMessages = type12TagMessages;
     }
 
-    public Integer getTagSerialNumber() {
+    public Long getTagSerialNumber() {
         return tagSerialNumber;
     }
 
-    public void setTagSerialNumber(Integer tagSerialNumber) {
+    public void setTagSerialNumber(Long tagSerialNumber) {
         this.tagSerialNumber = tagSerialNumber;
     }
 
@@ -184,6 +204,22 @@ public class Tag {
 
     public void setFIELD16(Double fIELD16) {
         this.fIELD16 = fIELD16;
+    }
+
+    @Override
+    public String toString() {
+
+        return "{date:"+this.date
+                +",time:"+this.time
+                +",controlStation:"+this.controlStation
+                +",tagSerialNumber:"+this.tagSerialNumber
+                +",signalStrength:"+this.signalStrength
+                +",batteryVoltage:"+this.batteryVoltage
+                +",tagSerialNumber:"+this.tagSerialNumber
+                +",firstAccelerometerCounter:"+this.firstAccelerometerCounter
+                +",firstSensorValue:"+this.firstSensorValue
+                +",secondAccelerometerCounter:"+this.secondAccelerometerCounter
+                +",secondSensorValuesXYZ:"+this.secondSensorValuesXYZ+"}";
     }
 
 }
