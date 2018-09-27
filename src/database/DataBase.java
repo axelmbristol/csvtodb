@@ -1,12 +1,18 @@
 package database;
 
-import com.mongodb.*;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
+import com.mongodb.MongoClient;
+import com.mongodb.MongoClientURI;
 import entities.Tag;
-import org.apache.commons.collections4.IteratorUtils;
 import trikita.log.Log;
+import org.bson.*;
 
 import java.net.UnknownHostException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Created by Axel on 26/09/2018.
@@ -17,31 +23,27 @@ public class DataBase {
     private MongoClient mongoClient;
 
     private void init(){
-        try {
             Log.d(TAG, "mongodb init...");
             mongoClient = new MongoClient(new MongoClientURI("mongodb://localhost:27017"));
-
-        } catch (UnknownHostException e) {
-            Log.e(TAG,"error while initializing mongoClient", e);
-        }
     }
 
     private void addTagToDB(String dataBaseName, Tag tag){
         Log.d("add tag "+tag.getTagSerialNumber()+" to database "+dataBaseName);
         if(mongoClient != null){
-            DBObject dbTagObject = createTagDBObject(tag);
-            mongoClient.getDB(dataBaseName).getCollection(dbTagObject.get("control_station").toString())
+            Document dbTagObject = createTagDBObject(tag);
+            mongoClient.getDatabase(dataBaseName).getCollection(dbTagObject.get("control_station").toString())
+
                     .getCollection(dbTagObject.get("serial_number").toString())
                     .getCollection(dbTagObject.get("date").toString())
-                    .insert(createTagDBObject(tag));
+
         }else {
             Log.e(TAG,"mongoClient is null !");
         }
     }
 
-    private DBObject createTagDBObject(Tag tag){
+    private Document createTagDBObject(Tag tag){
         Log.d(TAG, "createTAgDBObject...");
-        return new BasicDBObject("date", tag.getDate())
+        return new Document("date", tag.getDate())
                 .append("time", tag.getTime())
                 .append("control_station", tag.getControlStation())
                 .append("type_12_tag_messages", tag.getType12TagMessages())
@@ -67,7 +69,7 @@ public class DataBase {
             while(it.hasNext()){
                 tags.add(DBObjectToTag(it.next()));
             }
-            Log.d(TAG,"getTagFromDBBySerialNumber tags="+tags);
+            Log.d(TAG,"getTagFromDBBySerialNumbertags="+tags);
             return tags;
         }else {
             Log.e(TAG,"mongoClient is null !");

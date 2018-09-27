@@ -1,11 +1,8 @@
 package entities;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import com.mongodb.BasicDBObject;
-import com.mongodb.DBObject;
 
 /**
  * Created by Axel on 26/09/2018.
@@ -220,6 +217,12 @@ public class Tag {
                 +",firstSensorValue:"+this.firstSensorValue
                 +",secondAccelerometerCounter:"+this.secondAccelerometerCounter
                 +",secondSensorValuesXYZ:"+this.secondSensorValuesXYZ+"}";
+
+//        return String.format(
+//                "Tag[date=%s, time='%s', controlStation='%s']",
+//                this.date, this.time, this.controlStation);
     }
+
+
 
 }
