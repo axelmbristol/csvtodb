@@ -1,0 +1,53 @@
+{
+  "control_station": 70101100019,
+  "animals": [
+    {
+      "serial_number": 40101310285,
+      "days": [
+        {
+          "date": "18/01/2015 00:00",
+          "tagDatas": [
+            {
+              "date": "18/01/2015 00:00",
+              "time": "6:00:00 AM",
+              "control_station": 70101100019,
+              "serial_number": 40101310285,
+              "signal_strength": "-75@",
+              "battery_voltage": "BB",
+              "second_sensor_values_xyz": "-3:3:-21:-14:25:29",
+              "correlation_identifier": "I",
+              "correlation_value": 6
+            }
+          ]
+        },
+        {
+          "date": "19/01/2015 00:00",
+          "tagDatas": [
+            {
+              "date": "19/01/2015 00:00",
+              "time": "6:00:00 AM",
+              "control_station": 70101100019,
+              "serial_number": 40101310285,
+              "signal_strength": "-75@",
+              "battery_voltage": "BB",
+              "second_sensor_values_xyz": "-3:3:-21:-14:25:29",
+              "correlation_identifier": "I",
+              "correlation_value": 6
+            },
+            {
+              "date": "19/01/2015 00:00",
+              "time": "7:00:00 AM",
+              "control_station": 70101100019,
+              "serial_number": 40101310285,
+              "signal_strength": "-75@",
+              "battery_voltage": "BB",
+              "second_sensor_values_xyz": "-3:3:-21:-14:25:29",
+              "correlation_identifier": "I",
+              "correlation_value": 6
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

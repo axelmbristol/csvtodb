@@ -3,12 +3,13 @@ package entities;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import com.mongodb.BasicDBObject;
+import org.bson.Document;
 
 /**
  * Created by Axel on 26/09/2018.
  * class rfid tag
  */
-public class Tag {
+public class TagData {
 
     @SerializedName("date")
     @Expose
@@ -59,20 +60,20 @@ public class Tag {
     @Expose
     private Double fIELD16;
 
-    public Tag(BasicDBObject dbObject) {
-        this.date = dbObject.getString("date");
-        this.time = dbObject.getString("time");
-        this.controlStation = dbObject.getInt("control_station");
-        this.type12TagMessages = dbObject.getInt("type_12_tag_messages");
-        this.tagSerialNumber = dbObject.getLong("tag_serial_number");
-        this.signalStrength = dbObject.getString("signal_strength");
-        this.batteryVoltage = dbObject.getString("battery_voltage");
-        this.firstAccelerometerCounter = dbObject.getString("first_accelerometer_counter");
-        this.firstSensorValue = dbObject.getInt("first_sensor_value");
-        this.secondAccelerometerCounter = dbObject.getString("second_accelerometer_counter");
-        this.secondSensorValuesXYZ = dbObject.getString("second_sensor_values_xyz");
-        this.correlationIdentifier = dbObject.getString("correlation_identifier");
-        this.correlationValue = dbObject.getInt("correlation_value");
+    public TagData(Document d) {
+        this.date = d.getString("date");
+        this.time = d.getString("time");
+        this.controlStation = d.getInteger("control_station");
+        this.type12TagMessages = d.getInteger("type_12_tag_messages");
+        this.tagSerialNumber = d.getLong("tag_serial_number");
+        this.signalStrength = d.getString("signal_strength");
+        this.batteryVoltage = d.getString("battery_voltage");
+        this.firstAccelerometerCounter = d.getString("first_accelerometer_counter");
+        this.firstSensorValue = d.getInteger("first_sensor_value");
+        this.secondAccelerometerCounter = d.getString("second_accelerometer_counter");
+        this.secondSensorValuesXYZ = d.getString("second_sensor_values_xyz");
+        this.correlationIdentifier = d.getString("correlation_identifier");
+        this.correlationValue = d.getInteger("correlation_value");
     }
 
     public String getDate() {
@@ -219,7 +220,7 @@ public class Tag {
                 +",secondSensorValuesXYZ:"+this.secondSensorValuesXYZ+"}";
 
 //        return String.format(
-//                "Tag[date=%s, time='%s', controlStation='%s']",
+//                "TagData[date=%s, time='%s', controlStation='%s']",
 //                this.date, this.time, this.controlStation);
     }
 

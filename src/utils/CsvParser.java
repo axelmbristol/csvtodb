@@ -1,6 +1,6 @@
 package utils;
 
-import entities.Tag;
+import entities.TagData;
 
 import java.util.Collections;
 import java.util.List;
@@ -10,7 +10,7 @@ import java.util.List;
  */
 public class CsvParser {
 
-    public static List<Tag> parse(){
+    public static List<TagData> parse(){
         return Collections.emptyList();
     }
 }
