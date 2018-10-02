@@ -1,11 +1,12 @@
 package database;
 
+import com.mongodb.BasicDBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
 import com.mongodb.client.model.Filters;
 import entities.CSVTagData;
+import org.bson.Document;
 import trikita.log.Log;
-import org.bson.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,19 +23,36 @@ import static com.mongodb.client.model.Filters.exists;
 public class DataBase {
     private static String TAG = DataBase.class.getName();
     private MongoClient mongoClient;
+    private String name;
 
-    private void init(){
-            Log.d(TAG, "mongodb init...");
-            mongoClient = new MongoClient(new MongoClientURI("mongodb://localhost:27017"));
+    private void init(String dataBaseName){
+        this.name = dataBaseName;
+        Log.d(TAG, "mongodb init...");
+        mongoClient = new MongoClient(new MongoClientURI("mongodb://localhost:27017"));
     }
 
-    private void addTagToDB(String dataBaseName, CSVTagData CSVTagData){
-        Log.d("add CSVTagData "+ CSVTagData.getTagSerialNumber()+" to database "+dataBaseName);
+    private void addTagToDB(CSVTagData CSVTagData){
+        Log.d("add CSVTagData "+ CSVTagData.getTagSerialNumber()+" to database "+name);
         if(mongoClient != null){
             Document farmDocument = createFarmDocument(CSVTagData);
-            mongoClient.getDatabase(dataBaseName)
-                    .getCollection(farmDocument.get("control_station").toString())
-                    .insertOne(farmDocument);
+            String collectionName = farmDocument.get("control_station").toString();
+
+            if(!isCollectionExists(collectionName)){
+                mongoClient.getDatabase(name)
+                        .getCollection(collectionName)
+                        .insertOne(farmDocument);
+            }else{
+                //update collection
+
+                BasicDBObject newDocument = new BasicDBObject();
+                newDocument.append("$set", new BasicDBObject().append("clients", 110));
+
+                BasicDBObject searchQuery = new BasicDBObject().append("hosting", "hostB");
+
+                collection.update(searchQuery, newDocument);
+
+            }
+
         }else {
             Log.e(TAG,"mongoClient is null !");
         }
@@ -80,6 +98,9 @@ public class DataBase {
         return new CSVTagData(doc);
     }
 
+    private boolean isCollectionExists(String collectionName){
+        return (mongoClient.getDatabase(name).getCollection(collectionName).count() > 1);
+    }
 
     private List<CSVTagData> getAnimalTagData(String dataBaseName, Integer controlStation, Integer serialNumber){
         if(mongoClient != null){
