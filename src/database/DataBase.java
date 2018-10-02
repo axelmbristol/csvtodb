@@ -3,7 +3,7 @@ package database;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
 import com.mongodb.client.model.Filters;
-import entities.TagData;
+import entities.CSVTagData;
 import trikita.log.Log;
 import org.bson.*;
 
@@ -28,83 +28,83 @@ public class DataBase {
             mongoClient = new MongoClient(new MongoClientURI("mongodb://localhost:27017"));
     }
 
-    private void addTagToDB(String dataBaseName, TagData tagData){
-        Log.d("add tagData "+ tagData.getTagSerialNumber()+" to database "+dataBaseName);
+    private void addTagToDB(String dataBaseName, CSVTagData CSVTagData){
+        Log.d("add CSVTagData "+ CSVTagData.getTagSerialNumber()+" to database "+dataBaseName);
         if(mongoClient != null){
-            Document dbTagObject = createFarmDocument(tagData);
+            Document farmDocument = createFarmDocument(CSVTagData);
             mongoClient.getDatabase(dataBaseName)
-                    .getCollection(dbTagObject.get("control_station").toString())
-                    .insertOne(dbTagObject);
+                    .getCollection(farmDocument.get("control_station").toString())
+                    .insertOne(farmDocument);
         }else {
             Log.e(TAG,"mongoClient is null !");
         }
     }
 
-    private Document createFarmDocument(TagData tagData){
-        return new Document("_id", tagData.getControlStation())
-                .append("control_station", tagData.getControlStation())
-                .append("animals", createAnimalDocument(tagData))
+    private Document createFarmDocument(CSVTagData CSVTagData){
+        return new Document("_id", CSVTagData.getControlStation())
+                .append("control_station", CSVTagData.getControlStation())
+                .append("animals", createAnimalDocument(CSVTagData))
                 ;
     }
 
-    private Document createAnimalDocument(TagData tagData){
-        return new Document("_id", tagData.getTagSerialNumber())
-                .append("serial_number", tagData.getTagSerialNumber())
-                .append("days",createDayDocument(tagData));
+    private Document createAnimalDocument(CSVTagData CSVTagData){
+        return new Document("_id", CSVTagData.getTagSerialNumber())
+                .append("serial_number", CSVTagData.getTagSerialNumber())
+                .append("days",createDayDocument(CSVTagData));
     }
 
-    private Document createDayDocument(TagData tagData){
-        return new Document("_id", tagData.getDate())
-                .append("date", tagData.getDate())
-                .append("tags", createTagDocument(tagData));
+    private Document createDayDocument(CSVTagData CSVTagData){
+        return new Document("_id", CSVTagData.getDate())
+                .append("date", CSVTagData.getDate())
+                .append("tags", createTagDocument(CSVTagData));
     }
 
-    private Document createTagDocument(TagData tagData){
-        return new Document("_id", tagData.getTime())
-                .append("date", tagData.getDate())
-                .append("time", tagData.getTime())
-                .append("control_station", tagData.getControlStation())
-                .append("type_12_tag_messages", tagData.getType12TagMessages())
-                .append("serial_number", tagData.getTagSerialNumber())
-                .append("signal_strength", tagData.getTagSerialNumber())
-                .append("battery_voltage", tagData.getBatteryVoltage())
-                .append("first_accelerometer_counter", tagData.getFirstAccelerometerCounter())
-                .append("first_sensor_value", tagData.getFirstSensorValue())
-                .append("second_accelerometer_counter", tagData.getSecondAccelerometerCounter())
-                .append("second_sensor_values_xyz", tagData.getSecondSensorValuesXYZ())
-                .append("correlation_identifier", tagData.getCorrelationIdentifier())
-                .append("correlation_value", tagData.getCorrelationValue());
+    private Document createTagDocument(CSVTagData CSVTagData){
+        return new Document("_id", CSVTagData.getTime())
+                .append("date", CSVTagData.getDate())
+                .append("time", CSVTagData.getTime())
+                .append("control_station", CSVTagData.getControlStation())
+                .append("type_12_tag_messages", CSVTagData.getType12TagMessages())
+                .append("serial_number", CSVTagData.getTagSerialNumber())
+                .append("signal_strength", CSVTagData.getTagSerialNumber())
+                .append("battery_voltage", CSVTagData.getBatteryVoltage())
+                .append("first_accelerometer_counter", CSVTagData.getFirstAccelerometerCounter())
+                .append("first_sensor_value", CSVTagData.getFirstSensorValue())
+                .append("second_accelerometer_counter", CSVTagData.getSecondAccelerometerCounter())
+                .append("second_sensor_values_xyz", CSVTagData.getSecondSensorValuesXYZ())
+                .append("correlation_identifier", CSVTagData.getCorrelationIdentifier())
+                .append("correlation_value", CSVTagData.getCorrelationValue());
     }
 
-    private TagData DocumentToTag(Document doc){
-        return new TagData(doc);
+    private CSVTagData DocumentToTag(Document doc){
+        return new CSVTagData(doc);
     }
 
 
-    private List<TagData> getAnimalTagData(String dataBaseName, Integer controlStation, Integer serialNumber){
+    private List<CSVTagData> getAnimalTagData(String dataBaseName, Integer controlStation, Integer serialNumber){
         if(mongoClient != null){
             Iterator<Document> it = mongoClient.getDatabase(dataBaseName).getCollection(controlStation.toString())
                     .find(Filters.and(eq("serial_number",serialNumber),exists("second_sensor_values_xyz"))).iterator();
-            List<TagData> tagDatas = new ArrayList<TagData>();
+            List<CSVTagData> CSVTagDatas = new ArrayList<CSVTagData>();
             while(it.hasNext()){
-                tagDatas.add(DocumentToTag(it.next()));
+                CSVTagDatas.add(DocumentToTag(it.next()));
             }
-            return tagDatas;
+            return CSVTagDatas;
         }else {
             Log.e(TAG,"mongoClient is null !");
             return Collections.emptyList();
         }
     }
 
-    private List<TagData> getAllTagsInControlStation(String dataBaseName, Integer controlStation){
+    private List<CSVTagData> getAllTagsInControlStation(String dataBaseName, Integer controlStation){
         if(mongoClient != null){
             Iterator<Document> it = mongoClient.getDatabase(dataBaseName).getCollection(controlStation.toString())
                     .find(exists("second_sensor_values_xyz")).iterator();
-            List<TagData> tagDatas = new ArrayList<TagData>();
+            List<CSVTagData> CSVTagDatas = new ArrayList<CSVTagData>();
             while(it.hasNext()){
-                tagDatas.add(DocumentToTag(it.next()));
+                CSVTagDatas.add(DocumentToTag(it.next()));
             }
-            return tagDatas;
+            return CSVTagDatas;
         }else {
             Log.e(TAG,"mongoClient is null !");
             return Collections.emptyList();

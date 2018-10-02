@@ -9,7 +9,7 @@ import org.bson.Document;
  * Created by Axel on 26/09/2018.
  * class rfid tag
  */
-public class TagData {
+public class CSVTagData {
 
     @SerializedName("date")
     @Expose
@@ -60,7 +60,7 @@ public class TagData {
     @Expose
     private Double fIELD16;
 
-    public TagData(Document d) {
+    public CSVTagData(Document d) {
         this.date = d.getString("date");
         this.time = d.getString("time");
         this.controlStation = d.getInteger("control_station");
@@ -220,7 +220,7 @@ public class TagData {
                 +",secondSensorValuesXYZ:"+this.secondSensorValuesXYZ+"}";
 
 //        return String.format(
-//                "TagData[date=%s, time='%s', controlStation='%s']",
+//                "CSVTagData[date=%s, time='%s', controlStation='%s']",
 //                this.date, this.time, this.controlStation);
     }
 
