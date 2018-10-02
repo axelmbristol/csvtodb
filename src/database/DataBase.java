@@ -1,9 +1,13 @@
 package database;
 
 import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Updates;
 import entities.CSVTagData;
 import org.bson.Document;
 import trikita.log.Log;
@@ -15,6 +19,7 @@ import java.util.List;
 
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.exists;
+import static com.mongodb.client.model.Filters.in;
 
 /**
  * Created by Axel on 26/09/2018.
@@ -24,45 +29,82 @@ public class DataBase {
     private static String TAG = DataBase.class.getName();
     private MongoClient mongoClient;
     private String name;
+    private MongoDatabase database;
 
     private void init(String dataBaseName){
         this.name = dataBaseName;
         Log.d(TAG, "mongodb init...");
         mongoClient = new MongoClient(new MongoClientURI("mongodb://localhost:27017"));
+        database = mongoClient.getDatabase(name);
     }
 
     private void addTagToDB(CSVTagData CSVTagData){
         Log.d("add CSVTagData "+ CSVTagData.getTagSerialNumber()+" to database "+name);
-        if(mongoClient != null){
-            Document farmDocument = createFarmDocument(CSVTagData);
-            String collectionName = farmDocument.get("control_station").toString();
 
-            if(!isCollectionExists(collectionName)){
-                mongoClient.getDatabase(name)
-                        .getCollection(collectionName)
-                        .insertOne(farmDocument);
+        Document farmDocument = createFarmDocument(CSVTagData);
+        String collectionName = farmDocument.get("control_station").toString();
+
+        if(!isCollectionExists(collectionName)){
+            //collection does not exist
+            Log.d(TAG, "collection does not exist. create new collection.");
+            database.getCollection(collectionName).insertOne(farmDocument);
+        }else{
+            //update collection
+            Log.d(TAG, "collection already exists. update collection "+collectionName+".");
+            Log.d(TAG, "checking if animal exists...");
+
+            if(isAnimalExists(collectionName, CSVTagData.getTagSerialNumber().toString())){
+                Log.d(TAG,"animal "+ CSVTagData.getTagSerialNumber().toString() +" does exist");
+                updateAnimal(CSVTagData, database.getCollection(collectionName));
             }else{
-                //update collection
-
-                BasicDBObject newDocument = new BasicDBObject();
-                newDocument.append("$set", new BasicDBObject().append("clients", 110));
-
-                BasicDBObject searchQuery = new BasicDBObject().append("hosting", "hostB");
-
-                collection.update(searchQuery, newDocument);
-
+                Log.d(TAG,"animal "+ CSVTagData.getTagSerialNumber().toString() +" does not exist.");
+                Log.d(TAG,"adding new animal.");
+                addNewAnimal(CSVTagData, database.getCollection(collectionName));
             }
-
-        }else {
-            Log.e(TAG,"mongoClient is null !");
         }
+
+    }
+
+    private boolean isCollectionExists(String collectionName){
+        return (database.getCollection(collectionName).count() > 1);
+    }
+
+    private boolean isAnimalExists(String collectionName, String serialNumber){
+        return (database.getCollection(collectionName).find(new Document("_id", serialNumber))).first() != null;
+    }
+
+    private void addNewAnimal(CSVTagData CSVTagData, MongoCollection collection){
+        collection.updateOne(eq("_id",
+                CSVTagData.getControlStation()),
+                Updates.addToSet("animals",
+                        createAnimalDocument(CSVTagData)));
+    }
+
+    private void updateAnimal(CSVTagData CSVTagData, MongoCollection collection){
+        Log.d(TAG, "updateAnimal...");
+        if(isDayExists(collection, CSVTagData.getTagSerialNumber().toString(), CSVTagData.getDate())){
+            Log.d(TAG, "day exist adding new data...");
+            collection.updateOne(Filters.and(eq("serial_number", CSVTagData.getTagSerialNumber()),
+                    eq("date", CSVTagData.getDate())),
+                    Updates.addToSet("tagData", createTagDocument(CSVTagData)));
+        }else{
+            Log.d(TAG, "day does not exist adding new day...");
+            collection.updateOne(eq("serial_number", CSVTagData.getTagSerialNumber()),
+                    Updates.addToSet("days", createDayDocument(CSVTagData)));
+        }
+
+    }
+
+    private boolean isDayExists(MongoCollection collection, String serialNumber, String day){
+        return collection.find(Filters.and(in("days", new BasicDBObject("date", day)),
+                eq("serial_number", serialNumber))
+        ).first() != null;
     }
 
     private Document createFarmDocument(CSVTagData CSVTagData){
         return new Document("_id", CSVTagData.getControlStation())
                 .append("control_station", CSVTagData.getControlStation())
-                .append("animals", createAnimalDocument(CSVTagData))
-                ;
+                .append("animals", createAnimalDocument(CSVTagData));
     }
 
     private Document createAnimalDocument(CSVTagData CSVTagData){
@@ -96,10 +138,6 @@ public class DataBase {
 
     private CSVTagData DocumentToTag(Document doc){
         return new CSVTagData(doc);
-    }
-
-    private boolean isCollectionExists(String collectionName){
-        return (mongoClient.getDatabase(name).getCollection(collectionName).count() > 1);
     }
 
     private List<CSVTagData> getAnimalTagData(String dataBaseName, Integer controlStation, Integer serialNumber){
