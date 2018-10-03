@@ -6,16 +6,14 @@ import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Updates;
 import entities.CSVTagData;
 import org.bson.Document;
 import trikita.log.Log;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.exists;
@@ -42,7 +40,9 @@ public class DataBase {
         Log.d("add CSVTagData "+ CSVTagData.getTagSerialNumber()+" to database "+name);
 
         Document farmDocument = createFarmDocument(CSVTagData);
-        String collectionName = farmDocument.get("control_station").toString();
+        String collectionName = "_"+farmDocument.get("control_station").toString(); //need _ for MongoDB collection syntax convention.
+
+        Log.d(TAG,"farm document="+farmDocument.toJson());
 
         if(!isCollectionExists(collectionName)){
             //collection does not exist
@@ -66,7 +66,8 @@ public class DataBase {
     }
 
     private boolean isCollectionExists(String collectionName){
-        return (database.getCollection(collectionName).count() > 1);
+        return database.listCollectionNames()
+                .into(new ArrayList<String>()).contains(collectionName);
     }
 
     private boolean isAnimalExists(String collectionName, String serialNumber){
@@ -74,10 +75,11 @@ public class DataBase {
     }
 
     private void addNewAnimal(CSVTagData CSVTagData, MongoCollection collection){
+        List<Document> animals = new ArrayList();
+        animals.add(createAnimalDocument(CSVTagData));
         collection.updateOne(eq("_id",
                 CSVTagData.getControlStation()),
-                Updates.addToSet("animals",
-                        createAnimalDocument(CSVTagData)));
+                Updates.addToSet("animals", animals));
     }
 
     private void updateAnimal(CSVTagData CSVTagData, MongoCollection collection){
@@ -121,12 +123,9 @@ public class DataBase {
 
     private Document createTagDocument(CSVTagData CSVTagData){
         return new Document("_id", CSVTagData.getTime())
-                .append("date", CSVTagData.getDate())
                 .append("time", CSVTagData.getTime())
-                .append("control_station", CSVTagData.getControlStation())
                 .append("type_12_tag_messages", CSVTagData.getType12TagMessages())
-                .append("serial_number", CSVTagData.getTagSerialNumber())
-                .append("signal_strength", CSVTagData.getTagSerialNumber())
+                .append("signal_strength", CSVTagData.getSignalStrength())
                 .append("battery_voltage", CSVTagData.getBatteryVoltage())
                 .append("first_accelerometer_counter", CSVTagData.getFirstAccelerometerCounter())
                 .append("first_sensor_value", CSVTagData.getFirstSensorValue())
