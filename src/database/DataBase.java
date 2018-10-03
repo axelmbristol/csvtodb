@@ -75,7 +75,7 @@ public class DataBase {
     }
 
     private void addNewAnimal(CSVTagData CSVTagData, MongoCollection collection){
-        List<Document> animals = new ArrayList();
+        List<BasicDBObject> animals = new ArrayList<BasicDBObject>();
         animals.add(createAnimalDocument(CSVTagData));
         collection.updateOne(eq("_id",
                 CSVTagData.getControlStation()),
@@ -104,25 +104,31 @@ public class DataBase {
     }
 
     private Document createFarmDocument(CSVTagData CSVTagData){
+        List<BasicDBObject> animals = new ArrayList<BasicDBObject>();
+        animals.add(createAnimalDocument(CSVTagData));
         return new Document("_id", CSVTagData.getControlStation())
                 .append("control_station", CSVTagData.getControlStation())
-                .append("animals", createAnimalDocument(CSVTagData));
+                .append("animals", animals);
     }
 
-    private Document createAnimalDocument(CSVTagData CSVTagData){
-        return new Document("_id", CSVTagData.getTagSerialNumber())
+    private BasicDBObject createAnimalDocument(CSVTagData CSVTagData){
+        List<BasicDBObject> days = new ArrayList<BasicDBObject>();
+        days.add(createDayDocument(CSVTagData));
+        return new BasicDBObject("_id", CSVTagData.getTagSerialNumber())
                 .append("serial_number", CSVTagData.getTagSerialNumber())
-                .append("days",createDayDocument(CSVTagData));
+                .append("days",days);
     }
 
-    private Document createDayDocument(CSVTagData CSVTagData){
-        return new Document("_id", CSVTagData.getDate())
+    private BasicDBObject createDayDocument(CSVTagData CSVTagData){
+        List<BasicDBObject> tags = new ArrayList<BasicDBObject>();
+        tags.add(createTagDocument(CSVTagData));
+        return new BasicDBObject("_id", CSVTagData.getDate())
                 .append("date", CSVTagData.getDate())
-                .append("tags", createTagDocument(CSVTagData));
+                .append("tags", tags);
     }
 
-    private Document createTagDocument(CSVTagData CSVTagData){
-        return new Document("_id", CSVTagData.getTime())
+    private BasicDBObject createTagDocument(CSVTagData CSVTagData){
+        return new BasicDBObject("_id", CSVTagData.getTime())
                 .append("time", CSVTagData.getTime())
                 .append("type_12_tag_messages", CSVTagData.getType12TagMessages())
                 .append("signal_strength", CSVTagData.getSignalStrength())
