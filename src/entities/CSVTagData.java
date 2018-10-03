@@ -19,7 +19,7 @@ public class CSVTagData {
     private String time;
     @SerializedName("control_station")
     @Expose
-    private Integer controlStation;
+    private Long controlStation;
     @SerializedName("type_12_tag_messages")
     @Expose
     private Integer type12TagMessages;
@@ -63,7 +63,7 @@ public class CSVTagData {
     public CSVTagData(Document d) {
         this.date = d.getString("date");
         this.time = d.getString("time");
-        this.controlStation = d.getInteger("control_station");
+        this.controlStation = d.getLong("control_station");
         this.type12TagMessages = d.getInteger("type_12_tag_messages");
         this.tagSerialNumber = d.getLong("tag_serial_number");
         this.signalStrength = d.getString("signal_strength");
@@ -74,6 +74,29 @@ public class CSVTagData {
         this.secondSensorValuesXYZ = d.getString("second_sensor_values_xyz");
         this.correlationIdentifier = d.getString("correlation_identifier");
         this.correlationValue = d.getInteger("correlation_value");
+    }
+
+    public CSVTagData(String date, String time, Long controlStation, Long tagSerialNumber,
+                      Integer type12TagMessages, String signalStrength,
+                      String batteryVoltage, String firstAccelerometerCounter,
+                      Integer firstSensorValue, String secondAccelerometerCounter,
+                      String secondSensorValuesXYZ, String correlationIdentifier,
+                      Integer correlationValue
+
+    ) {
+        this.date = date;
+        this.time = time;
+        this.controlStation = controlStation;
+        this.type12TagMessages = type12TagMessages;
+        this.tagSerialNumber = tagSerialNumber;
+        this.signalStrength = signalStrength;
+        this.batteryVoltage = batteryVoltage;
+        this.firstAccelerometerCounter = firstAccelerometerCounter;
+        this.firstSensorValue = firstSensorValue;
+        this.secondAccelerometerCounter = secondAccelerometerCounter;
+        this.secondSensorValuesXYZ = secondSensorValuesXYZ;
+        this.correlationIdentifier = correlationIdentifier;
+        this.correlationValue = correlationValue;
     }
 
     public String getDate() {
@@ -92,11 +115,11 @@ public class CSVTagData {
         this.time = time;
     }
 
-    public Integer getControlStation() {
+    public Long getControlStation() {
         return controlStation;
     }
 
-    public void setControlStation(Integer controlStation) {
+    public void setControlStation(Long controlStation) {
         this.controlStation = controlStation;
     }
 

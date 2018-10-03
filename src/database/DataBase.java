@@ -31,14 +31,14 @@ public class DataBase {
     private String name;
     private MongoDatabase database;
 
-    private void init(String dataBaseName){
+    public DataBase(String dataBaseName){
         this.name = dataBaseName;
         Log.d(TAG, "mongodb init...");
         mongoClient = new MongoClient(new MongoClientURI("mongodb://localhost:27017"));
         database = mongoClient.getDatabase(name);
     }
 
-    private void addTagToDB(CSVTagData CSVTagData){
+    public void addData(CSVTagData CSVTagData){
         Log.d("add CSVTagData "+ CSVTagData.getTagSerialNumber()+" to database "+name);
 
         Document farmDocument = createFarmDocument(CSVTagData);
