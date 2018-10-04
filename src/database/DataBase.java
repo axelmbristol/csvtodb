@@ -1,19 +1,23 @@
 package database;
 
-import com.mongodb.*;
-import com.mongodb.client.*;
+import com.mongodb.BasicDBObject;
+import com.mongodb.MongoClient;
+import com.mongodb.MongoClientURI;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Updates;
 import entities.CSVTagData;
 import org.bson.Document;
 import trikita.log.Log;
 
-import java.util.*;
-import java.util.logging.Filter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.exists;
-import static com.mongodb.client.model.Filters.in;
 
 /**
  * Created by Axel on 26/09/2018.
@@ -83,12 +87,12 @@ public class DataBase {
         Log.d(TAG, "updateAnimal...");
         if(isDayExists(collection, CSVTagData.getTagSerialNumber(), CSVTagData.getDate())){
             Log.d(TAG, "day exist adding new data...");
-            collection.findOneAndUpdate(eq("animals.days.date", CSVTagData.getDate()),
-                    Updates.addToSet("tagData", createTagDocument(CSVTagData)));
+            collection.updateOne(eq("animals.serial_number", CSVTagData.getTagSerialNumber()),
+                    Updates.push("animals.$.days.0.tagData", createTagDocument(CSVTagData)));
         }else{
             Log.d(TAG, "day does not exist adding new day...");
             collection.updateOne(eq("animals.serial_number", CSVTagData.getTagSerialNumber()),
-                    Updates.addToSet("days", createDayDocument(CSVTagData)));
+                    Updates.addToSet("animals.$.days", createDayDocument(CSVTagData)));
         }
 
     }
