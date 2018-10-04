@@ -1,12 +1,7 @@
 package database;
 
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBObject;
-import com.mongodb.MongoClient;
-import com.mongodb.MongoClientURI;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.MongoIterable;
+import com.mongodb.*;
+import com.mongodb.client.*;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Updates;
 import entities.CSVTagData;
@@ -14,6 +9,7 @@ import org.bson.Document;
 import trikita.log.Log;
 
 import java.util.*;
+import java.util.logging.Filter;
 
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.exists;
@@ -53,7 +49,7 @@ public class DataBase {
             Log.d(TAG, "collection already exists. update collection "+collectionName+".");
             Log.d(TAG, "checking if animal exists...");
 
-            if(isAnimalExists(collectionName, CSVTagData.getTagSerialNumber().toString())){
+            if(isAnimalExists(collectionName, CSVTagData.getTagSerialNumber())){
                 Log.d(TAG,"animal "+ CSVTagData.getTagSerialNumber().toString() +" does exist");
                 updateAnimal(CSVTagData, database.getCollection(collectionName));
             }else{
@@ -70,37 +66,36 @@ public class DataBase {
                 .into(new ArrayList<String>()).contains(collectionName);
     }
 
-    private boolean isAnimalExists(String collectionName, String serialNumber){
-        return (database.getCollection(collectionName).find(new Document("_id", serialNumber))).first() != null;
+    private boolean isAnimalExists(String collectionName, Long serialNumber){
+        BasicDBObject query = new BasicDBObject("animals.serial_number", serialNumber);
+        return database.getCollection(collectionName).find(query).first() != null;
     }
 
     private void addNewAnimal(CSVTagData CSVTagData, MongoCollection collection){
-        List<BasicDBObject> animals = new ArrayList<BasicDBObject>();
-        animals.add(createAnimalDocument(CSVTagData));
+        //List<BasicDBObject> animals = new ArrayList<BasicDBObject>();
+        //animals.add(createAnimalDocument(CSVTagData));
         collection.updateOne(eq("_id",
                 CSVTagData.getControlStation()),
-                Updates.addToSet("animals", animals));
+                Updates.addToSet("animals", createAnimalDocument(CSVTagData)));
     }
 
     private void updateAnimal(CSVTagData CSVTagData, MongoCollection collection){
         Log.d(TAG, "updateAnimal...");
-        if(isDayExists(collection, CSVTagData.getTagSerialNumber().toString(), CSVTagData.getDate())){
+        if(isDayExists(collection, CSVTagData.getTagSerialNumber(), CSVTagData.getDate())){
             Log.d(TAG, "day exist adding new data...");
-            collection.updateOne(Filters.and(eq("serial_number", CSVTagData.getTagSerialNumber()),
-                    eq("date", CSVTagData.getDate())),
+            collection.findOneAndUpdate(eq("animals.days.date", CSVTagData.getDate()),
                     Updates.addToSet("tagData", createTagDocument(CSVTagData)));
         }else{
             Log.d(TAG, "day does not exist adding new day...");
-            collection.updateOne(eq("serial_number", CSVTagData.getTagSerialNumber()),
+            collection.updateOne(eq("animals.serial_number", CSVTagData.getTagSerialNumber()),
                     Updates.addToSet("days", createDayDocument(CSVTagData)));
         }
 
     }
 
-    private boolean isDayExists(MongoCollection collection, String serialNumber, String day){
-        return collection.find(Filters.and(in("days", new BasicDBObject("date", day)),
-                eq("serial_number", serialNumber))
-        ).first() != null;
+    private boolean isDayExists(MongoCollection<Document> collection, Long serialNumber, String day){
+        BasicDBObject query = new BasicDBObject("animals.days.date", day);
+        return collection.find(query).first() != null;
     }
 
     private Document createFarmDocument(CSVTagData CSVTagData){
@@ -124,7 +119,7 @@ public class DataBase {
         tags.add(createTagDocument(CSVTagData));
         return new BasicDBObject("_id", CSVTagData.getDate())
                 .append("date", CSVTagData.getDate())
-                .append("tags", tags);
+                .append("tagData", tags);
     }
 
     private BasicDBObject createTagDocument(CSVTagData CSVTagData){
