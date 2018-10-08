@@ -92,11 +92,17 @@ public class DataBase {
         Log.d(TAG, "updateAnimal...");
         if(isDayExists(collection, CSVTagData.getTagSerialNumber(), CSVTagData.getDate())){
             Log.d(TAG, "day exist adding new data...");
-            int index = getItemIndex(collection, CSVTagData.getTagSerialNumber(), CSVTagData.getDate());
-            collection.updateOne(Filters.and(
-                    eq("animals.serial_number", CSVTagData.getTagSerialNumber())
-                    ),
-                    Updates.push("animals.$.days."+index+".tagData", createTagDocument(CSVTagData)));
+            Integer index = getItemIndex(collection, CSVTagData.getTagSerialNumber(), CSVTagData.getDate());
+
+            if(index!=null){
+                collection.updateOne(Filters.and(
+                        eq("animals.serial_number", CSVTagData.getTagSerialNumber())
+                        ),
+                        Updates.push("animals.$.days."+index+".tagData", createTagDocument(CSVTagData)));
+            }else {
+                Log.d(TAG,"index is null");
+            }
+
         }else{
             Log.d(TAG, "day does not exist adding new day...");
             collection.updateOne(eq("animals.serial_number", CSVTagData.getTagSerialNumber()),
@@ -104,33 +110,29 @@ public class DataBase {
         }
     }
 
-    private int getItemIndex(MongoCollection<Document> collection, Long serialNumber, String date){
-        //Document d = collection.find(elemMatch("animals", Document.parse("{ serial_number:"+serialNumber+"}"))).first();
-
-        Document d = collection.find(elemMatch("animals", eq("serial_number", 40101310285L))).first();
-
-        String json = d.toJson();
-
-        JsonObject jsonObject = (new JsonParser()).parse(d.toJson()).getAsJsonObject();
-        JsonArray animals = jsonObject.getAsJsonArray("animals");
-        int index = 0;
-        for(JsonElement animal : animals){
-
-            //JsonElement id = ((JsonObject) animal).get("serial_number").;
-
-            //if( id != serialNumber) continue;
-
-            JsonArray days = ((JsonObject) animal).getAsJsonArray("days");
-            for(int i = 0; i < days.size(); i++){
-                if(((JsonObject) days.get(i)).get("date").getAsString().equals(date)){
-                    index = i;
-                    break;
+    private Integer getItemIndex(MongoCollection<Document> collection, Long serialNumber, String date){
+        Document d = collection.find().first();
+        JsonObject jsonObject;
+        Integer index = null;
+        if (d != null) {
+            jsonObject = (new JsonParser()).parse(d.toJson()).getAsJsonObject();
+            JsonArray animals = jsonObject.getAsJsonArray("animals");
+            for (JsonElement animal : animals) {
+                JsonElement id = ((JsonObject) animal).get("serial_number");
+                Long a = ((JsonObject) id).get("$numberLong").getAsLong();
+                if (!a.equals(serialNumber)) continue;
+                JsonArray days = ((JsonObject) animal).getAsJsonArray("days");
+                for (int i = days.size() - 1; i >= 0; i++) {
+                    Log.d(TAG, "i=" + i);
+                    if (((JsonObject) days.get(i)).get("date").getAsString().equals(date)) {
+                        index = i;
+                        break;
+                    }
                 }
             }
         }
         Log.d(TAG,"index="+index+" for date="+date);
-
-        return index;
+        return null;
     }
 
 
