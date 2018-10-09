@@ -1,5 +1,3 @@
-import database.DataBase;
-import entities.CSVTagData;
 import trikita.log.Log;
 import utils.XLSXParser;
 
@@ -9,14 +7,7 @@ public class Main {
 
     public static void main(String[] args) {
         Log.d(TAG,"start...");
-        XLSXParser.init("C:\\Users\\Axel\\Desktop\\data");
-        /*DataBase dataBase = new DataBase("main");
-        dataBase.addData(new CSVTagData("30/01/2015 00:00", "6:00:00 AM",
-                70101100019L, 40101310285L, 12,
-                "-75@", "BB","",0,
-                "","-3:3:-21:-14:25:29",
-                "I",6
-                ));*/
+        XLSXParser.init("C:\\Users\\Axel\\Desktop\\data","main");
     }
 
 }

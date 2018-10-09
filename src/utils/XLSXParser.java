@@ -1,5 +1,6 @@
 package utils;
 
+import database.DataBase;
 import entities.CSVTagData;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -23,11 +24,23 @@ public class XLSXParser {
 
     private static String TAG = XLSXParser.class.getName();
 
-    public static void init(String dirPath){
+    public static void init(String dirPath, String dbName){
+        Log.d(TAG,"init...");
         List<String> files = findAllFilesWithExt(dirPath);
+        DataBase dataBase = new DataBase(dbName);
         for (String path: files) {
-            parse(path);
+            List<CSVTagData> datas = parse(path);
+            for (CSVTagData data: datas) {
+                dataBase.addData(data);
+            }
+            datas.clear();
         }
+        /*dataBase.addData(new CSVTagData("30/01/2015 00:00", "6:00:00 AM",
+                70101100019L, 12, 40101310285L,
+                "-75@", "BB","",0,
+                "","-3:3:-21:-14:25:29",
+                "I",6
+                ));*/
     }
 
     private static List<CSVTagData> parse(String filePath){
