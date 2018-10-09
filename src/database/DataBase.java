@@ -17,6 +17,7 @@ import trikita.log.Log;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static com.mongodb.client.model.Filters.eq;
 
@@ -107,7 +108,7 @@ public class DataBase {
 
     private boolean isCollectionExists(String collectionName){
         return database.listCollectionNames()
-                .into(new ArrayList<String>()).contains(collectionName);
+                .into(new ArrayList<>()).contains(collectionName);
     }
 
     private boolean isAnimalExists(MongoCollection<Document> collection, Long serialNumber){
@@ -145,12 +146,12 @@ public class DataBase {
     }
 
     private JsonArray getAnimalsArray(MongoCollection<Document> collection){
-        return (new JsonParser()).parse(collection.find().first().toJson())
+        return (new JsonParser()).parse(Objects.requireNonNull(collection.find().first()).toJson())
                 .getAsJsonObject().getAsJsonArray("animals");
     }
 
     private Document createFarmDocument(CSVTagData CSVTagData){
-        List<BasicDBObject> animals = new ArrayList<BasicDBObject>();
+        List<BasicDBObject> animals = new ArrayList<>();
         animals.add(createAnimalDocument(CSVTagData));
         return new Document("_id", CSVTagData.getControlStation())
                 .append("control_station", CSVTagData.getControlStation())
@@ -158,7 +159,7 @@ public class DataBase {
     }
 
     private BasicDBObject createAnimalDocument(CSVTagData CSVTagData){
-        List<BasicDBObject> days = new ArrayList<BasicDBObject>();
+        List<BasicDBObject> days = new ArrayList<>();
         days.add(createDayDocument(CSVTagData));
         return new BasicDBObject("_id", CSVTagData.getTagSerialNumber())
                 .append("serial_number", CSVTagData.getTagSerialNumber())
@@ -166,7 +167,7 @@ public class DataBase {
     }
 
     private BasicDBObject createDayDocument(CSVTagData CSVTagData){
-        List<BasicDBObject> tags = new ArrayList<BasicDBObject>();
+        List<BasicDBObject> tags = new ArrayList<>();
         tags.add(createTagDocument(CSVTagData));
         return new BasicDBObject("_id", CSVTagData.getDate())
                 .append("date", CSVTagData.getDate())

@@ -1,17 +1,36 @@
 package utils;
 
+import org.apache.commons.io.FileUtils;
+import trikita.log.Log;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by Axel on 05/10/2018.
- * All server calls for on demand label construction.
- * REST API
+ * Utils class
  */
 public class Utils {
 
-    public static String toNumberLong(String l){
-        return "NumberLong("+l+")";
-    }
+    private static String TAG = Utils.class.getName();
 
-    public static String toNumberLong(Long l){
-        return "\"NumberLong("+l+")\"";
+    public static List<String> findAllFilesWithExt(String dirPath){
+        List<String> paths = new ArrayList<>();
+        try {
+            File dir = new File(dirPath);
+            String[] extensions = new String[] { "xlsx", "csv" };
+            Log.d(TAG,"Getting all .xlsx and .csv files in " + dir.getCanonicalPath()
+                    + " including those in subdirectories");
+            List<File> files = (List<File>) FileUtils.listFiles(dir, extensions, true);
+            for (File file : files) {
+                Log.d(TAG,"file: " + file.getCanonicalPath());
+                paths.add(file.getCanonicalPath());
+            }
+        } catch (IOException e) {
+            Log.e(TAG,"error while getting file paths im directory", e);
+        }
+        return paths;
     }
 }
