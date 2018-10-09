@@ -1,30 +1,24 @@
 package database;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.mongodb.*;
+import com.google.gson.*;
+import com.mongodb.BasicDBObject;
+import com.mongodb.MongoClient;
+import com.mongodb.MongoClientURI;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Updates;
 import entities.CSVTagData;
+import javafx.geometry.Point3D;
 import jdk.nashorn.api.scripting.JSObject;
-import org.bson.BSON;
 import org.bson.Document;
-import org.bson.conversions.Bson;
-import org.bson.types.ObjectId;
 import trikita.log.Log;
 
+import javax.print.Doc;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
-import static com.mongodb.client.model.Filters.*;
-import static java.lang.System.out;
+import static com.mongodb.client.model.Filters.eq;
 
 /**
  * Created by Axel on 26/09/2018.
@@ -60,7 +54,7 @@ public class DataBase {
             Log.d(TAG, "collection already exists. update collection "+collectionName+".");
             Log.d(TAG, "checking if animal exists...");
 
-            if(isAnimalExists(collectionName, CSVTagData.getTagSerialNumber())){
+            if(isAnimalExists(database.getCollection(collectionName), CSVTagData.getTagSerialNumber())){
                 Log.d(TAG,"animal "+ CSVTagData.getTagSerialNumber().toString() +" does exist");
                 updateAnimal(CSVTagData, database.getCollection(collectionName));
             }else{
@@ -69,17 +63,6 @@ public class DataBase {
                 addNewAnimal(CSVTagData, database.getCollection(collectionName));
             }
         }
-
-    }
-
-    private boolean isCollectionExists(String collectionName){
-        return database.listCollectionNames()
-                .into(new ArrayList<String>()).contains(collectionName);
-    }
-
-    private boolean isAnimalExists(String collectionName, Long serialNumber){
-        BasicDBObject query = new BasicDBObject("animals.serial_number", serialNumber);
-        return database.getCollection(collectionName).find(query).first() != null;
     }
 
     private void addNewAnimal(CSVTagData CSVTagData, MongoCollection collection){
@@ -93,8 +76,7 @@ public class DataBase {
         if(isDayExists(collection, CSVTagData.getTagSerialNumber(), CSVTagData.getDate())){
             Log.d(TAG, "day exist adding new data...");
             Integer index = getItemIndex(collection, CSVTagData.getTagSerialNumber(), CSVTagData.getDate());
-
-            if(index!=null){
+            if(index != null){
                 collection.updateOne(Filters.and(
                         eq("animals.serial_number", CSVTagData.getTagSerialNumber())
                         ),
@@ -111,35 +93,61 @@ public class DataBase {
     }
 
     private Integer getItemIndex(MongoCollection<Document> collection, Long serialNumber, String date){
-        Document d = collection.find().first();
-        JsonObject jsonObject;
         Integer index = null;
-        if (d != null) {
-            jsonObject = (new JsonParser()).parse(d.toJson()).getAsJsonObject();
-            JsonArray animals = jsonObject.getAsJsonArray("animals");
-            for (JsonElement animal : animals) {
-                JsonElement id = ((JsonObject) animal).get("serial_number");
-                Long a = ((JsonObject) id).get("$numberLong").getAsLong();
-                if (!a.equals(serialNumber)) continue;
-                JsonArray days = ((JsonObject) animal).getAsJsonArray("days");
-                for (int i = days.size() - 1; i >= 0; i++) {
-                    Log.d(TAG, "i=" + i);
-                    if (((JsonObject) days.get(i)).get("date").getAsString().equals(date)) {
-                        index = i;
-                        break;
-                    }
-                }
+        JsonArray days = getAnimalDays(collection, serialNumber);
+        for (int i = days.size() - 1; i >= 0; i--) {
+            Log.d(TAG, "i=" + i);
+            if (((JsonObject) days.get(i)).get("date").getAsString().equals(date)) {
+                index = i;
+                break;
             }
         }
-        Log.d(TAG,"index="+index+" for date="+date);
-        return null;
+        Log.d(TAG,"index="+index+" for date="+date+" serial_number="+serialNumber);
+        return index;
     }
 
+    private boolean isCollectionExists(String collectionName){
+        return database.listCollectionNames()
+                .into(new ArrayList<String>()).contains(collectionName);
+    }
 
+    private boolean isAnimalExists(MongoCollection<Document> collection, Long serialNumber){
+        return getAnimal(collection, serialNumber).has("serial_number");
+    }
 
     private boolean isDayExists(MongoCollection<Document> collection, Long serialNumber, String day){
-        BasicDBObject query = new BasicDBObject("animals.days.date", day);
-        return collection.find(query).first() != null;
+        boolean dayExist = false;
+        JsonArray days = getAnimalDays(collection, serialNumber);
+        for (int i = days.size() - 1; i >= 0; i--) {
+            if (((JsonObject) days.get(i)).get("date").getAsString().equals(day)) {
+                dayExist = true;
+                break;
+            }
+        }
+        Log.d(TAG,"dayExist ? "+dayExist);
+        return dayExist;
+    }
+
+    private JsonArray getAnimalDays(MongoCollection<Document> collection, Long serialNumber){
+        return getAnimal(collection, serialNumber).getAsJsonArray("days");
+    }
+
+    private JsonObject getAnimal(MongoCollection<Document> collection, Long serialNumber){
+        JsonObject result = new JsonObject();
+        JsonArray animals = getAnimalsArray(collection);
+        for(JsonElement animal : animals){
+            JsonElement json = ((JsonObject) animal).get("serial_number");
+            Long sn = ((JsonObject) json).get("$numberLong").getAsLong();
+            if (!sn.equals(serialNumber)) continue;
+            result = (JsonObject)animal;
+        }
+        Log.d(TAG,"getAnimal result="+result+" size="+result.size());
+        return result;
+    }
+
+    private JsonArray getAnimalsArray(MongoCollection<Document> collection){
+        return (new JsonParser()).parse(collection.find().first().toJson())
+                .getAsJsonObject().getAsJsonArray("animals");
     }
 
     private Document createFarmDocument(CSVTagData CSVTagData){
@@ -180,7 +188,9 @@ public class DataBase {
                 .append("correlation_value", CSVTagData.getCorrelationValue());
     }
 
-    private CSVTagData DocumentToTag(Document doc){
+
+
+    /*private CSVTagData DocumentToTag(Document doc){
         return new CSVTagData(doc);
     }
 
@@ -212,7 +222,7 @@ public class DataBase {
             Log.e(TAG,"mongoClient is null !");
             return Collections.emptyList();
         }
-    }
+    }*/
 
 }
 
