@@ -5,6 +5,7 @@ import trikita.log.Log;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,5 +33,12 @@ public class Utils {
             Log.e(TAG,"error while getting file paths im directory", e);
         }
         return paths;
+    }
+
+    public static String humanReadableFormat(Duration duration) {
+        return duration.toString()
+                .substring(2)
+                .replaceAll("(\\d[HMS])(?!$)", "$1 ")
+                .toLowerCase();
     }
 }

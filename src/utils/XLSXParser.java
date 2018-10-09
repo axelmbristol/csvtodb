@@ -7,13 +7,14 @@ import trikita.log.Log;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.Iterator;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 import static utils.Utils.findAllFilesWithExt;
+import static utils.Utils.humanReadableFormat;
 
 /**
  * Created by Axel on 26/09/2018.
@@ -30,28 +31,54 @@ public class XLSXParser {
     }
 
     private static List<CSVTagData> parse(String filePath){
+        int i = 0;
+        List<CSVTagData> result = new ArrayList<>();
+        Instant start = Instant.now();
+        Instant start2 = Instant.now();
         try {
+            DataFormatter df = new DataFormatter();
+            Log.d(TAG,"read file...");
             FileInputStream excelFile = new FileInputStream(new File(filePath));
             Workbook workbook = new XSSFWorkbook(excelFile);
-            Sheet datatypeSheet = workbook.getSheetAt(0);
-            for (Row currentRow : datatypeSheet) {
+            Sheet sheet = workbook.getSheetAt(0);
+            Instant end2 = Instant.now();
+            Log.d(TAG,"reading time= "+humanReadableFormat(Duration.between(start2, end2)));
+            Log.d(TAG,"start parsing...");
+            for (Row currentRow : sheet) {
+                int j = 0;
+                i++;
+                if(i < 3) continue;
+                //if(i > 4) break;
+                List<String> data = new ArrayList<>();
                 for (Cell currentCell : currentRow) {
+                    data.add(df.formatCellValue(currentCell));
+                    //System.out.print(df.formatCellValue(currentCell)+"   ");
+                    j++;
+                }
+                //System.out.print(data.size()+"\n");
+                if(data.size() < 16) continue;
 
-                    Log.d(TAG,"currentCell="+currentCell.getStringCellValue());
-                    //getCellTypeEnum shown as deprecated for version 3.15
-                    //getCellTypeEnum ill be renamed to getCellType starting from version 4.0
-                       /* if (currentCell.getCellTypeEnum() == CellType.STRING) {
-                            System.out.print(currentCell.getStringCellValue() + "--");
-                        } else if (currentCell.getCellTypeEnum() == CellType.NUMERIC) {
-                            System.out.print(currentCell.getNumericCellValue() + "--");
-                        }
-                        */
+                try{
+                    result.add(new CSVTagData(data.get(0), data.get(1), Long.parseLong(data.get(2)), Integer.valueOf(data.get(3)),
+                            Long.valueOf(data.get(4)), data.get(5),
+                            data.get(6), data.get(7),
+                            Integer.valueOf(data.get(8)), data.get(9),
+                            data.get(10), data.get(11),
+                            Integer.valueOf(data.get(12))
+                    ));
+                }catch (NumberFormatException e){
+                    Log.e(TAG,"error while parsing data", e);
                 }
             }
+            //System.out.println(result);
         } catch (IOException e) {
             Log.e(TAG, "error while parsing xlsx file", e);
         }
 
-        return Collections.emptyList();
+        Instant end = Instant.now();
+        Log.d(TAG,"parsing time= "+humanReadableFormat(Duration.between(start, end)));
+        Log.d(TAG, String.format("found %d valid input.",result.size()));
+
+        return result;
     }
 }

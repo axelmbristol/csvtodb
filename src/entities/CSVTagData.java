@@ -76,8 +76,8 @@ public class CSVTagData {
         this.correlationValue = d.getInteger("correlation_value");
     }
 
-    public CSVTagData(String date, String time, Long controlStation, Long tagSerialNumber,
-                      Integer type12TagMessages, String signalStrength,
+    public CSVTagData(String date, String time, Long controlStation, Integer type12TagMessages,
+                      Long tagSerialNumber, String signalStrength,
                       String batteryVoltage, String firstAccelerometerCounter,
                       Integer firstSensorValue, String secondAccelerometerCounter,
                       String secondSensorValuesXYZ, String correlationIdentifier,
@@ -230,17 +230,16 @@ public class CSVTagData {
     @Override
     public String toString() {
 
-        return "{date:"+this.date
-                +",time:"+this.time
-                +",controlStation:"+this.controlStation
-                +",tagSerialNumber:"+this.tagSerialNumber
-                +",signalStrength:"+this.signalStrength
-                +",batteryVoltage:"+this.batteryVoltage
-                +",tagSerialNumber:"+this.tagSerialNumber
-                +",firstAccelerometerCounter:"+this.firstAccelerometerCounter
-                +",firstSensorValue:"+this.firstSensorValue
-                +",secondAccelerometerCounter:"+this.secondAccelerometerCounter
-                +",secondSensorValuesXYZ:"+this.secondSensorValuesXYZ+"}";
+        return "{date: "+this.date
+                //+", time: "+this.time
+                //+", controlStation: "+this.controlStation
+                +", tagSerialNumber: "+this.tagSerialNumber
+                //+", signalStrength: "+this.signalStrength
+                //+", batteryVoltage: "+this.batteryVoltage
+               // +", firstAccelerometerCounter: "+this.firstAccelerometerCounter
+               // +", firstSensorValue: "+this.firstSensorValue
+                //+", secondAccelerometerCounter: "+this.secondAccelerometerCounter
+                +", secondSensorValuesXYZ: "+this.secondSensorValuesXYZ+"}";
 
 //        return String.format(
 //                "CSVTagData[date=%s, time='%s', controlStation='%s']",
