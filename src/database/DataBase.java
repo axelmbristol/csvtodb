@@ -1,6 +1,9 @@
 package database;
 
-import com.google.gson.*;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.mongodb.BasicDBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
@@ -9,12 +12,9 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Updates;
 import entities.CSVTagData;
-import javafx.geometry.Point3D;
-import jdk.nashorn.api.scripting.JSObject;
 import org.bson.Document;
 import trikita.log.Log;
 
-import javax.print.Doc;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,14 +26,13 @@ import static com.mongodb.client.model.Filters.eq;
  */
 public class DataBase {
     private static String TAG = DataBase.class.getName();
-    private MongoClient mongoClient;
     private String name;
     private MongoDatabase database;
 
     public DataBase(String dataBaseName){
         this.name = dataBaseName;
         Log.d(TAG, "mongodb init...");
-        mongoClient = new MongoClient(new MongoClientURI("mongodb://localhost:27017"));
+        MongoClient mongoClient = new MongoClient(new MongoClientURI("mongodb://localhost:27017"));
         database = mongoClient.getDatabase(name);
     }
 
@@ -188,41 +187,6 @@ public class DataBase {
                 .append("correlation_value", CSVTagData.getCorrelationValue());
     }
 
-
-
-    /*private CSVTagData DocumentToTag(Document doc){
-        return new CSVTagData(doc);
-    }
-
-    private List<CSVTagData> getAnimalTagData(String dataBaseName, Integer controlStation, Integer serialNumber){
-        if(mongoClient != null){
-            Iterator<Document> it = mongoClient.getDatabase(dataBaseName).getCollection(controlStation.toString())
-                    .find(Filters.and(eq("serial_number",serialNumber),exists("second_sensor_values_xyz"))).iterator();
-            List<CSVTagData> CSVTagDatas = new ArrayList<CSVTagData>();
-            while(it.hasNext()){
-                CSVTagDatas.add(DocumentToTag(it.next()));
-            }
-            return CSVTagDatas;
-        }else {
-            Log.e(TAG,"mongoClient is null !");
-            return Collections.emptyList();
-        }
-    }
-
-    private List<CSVTagData> getAllTagsInControlStation(String dataBaseName, Integer controlStation){
-        if(mongoClient != null){
-            Iterator<Document> it = mongoClient.getDatabase(dataBaseName).getCollection(controlStation.toString())
-                    .find(exists("second_sensor_values_xyz")).iterator();
-            List<CSVTagData> CSVTagDatas = new ArrayList<CSVTagData>();
-            while(it.hasNext()){
-                CSVTagDatas.add(DocumentToTag(it.next()));
-            }
-            return CSVTagDatas;
-        }else {
-            Log.e(TAG,"mongoClient is null !");
-            return Collections.emptyList();
-        }
-    }*/
 
 }
 
