@@ -17,7 +17,7 @@ public class Utils {
 
     private static String TAG = Utils.class.getName();
 
-    public static List<String> findAllFilesWithExt(String dirPath){
+    static List<String> findAllFilesWithExt(String dirPath){
         List<String> paths = new ArrayList<>();
         try {
             File dir = new File(dirPath);
@@ -27,10 +27,11 @@ public class Utils {
             List<File> files = (List<File>) FileUtils.listFiles(dir, extensions, true);
             for (File file : files) {
                 Log.d(TAG,"file: " + file.getCanonicalPath());
+                if(file.getCanonicalPath().contains("~")) continue;
                 paths.add(file.getCanonicalPath());
             }
-        } catch (IOException e) {
-            Log.e(TAG,"error while getting file paths im directory", e);
+        } catch (IOException | IllegalArgumentException e) {
+            Log.e(TAG,"error while getting file paths in directory", e);
         }
         return paths;
     }

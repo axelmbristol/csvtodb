@@ -1,7 +1,7 @@
 package utils;
 
 import database.DataBase;
-import entities.CSVTagData;
+import entities.ExcelDataRow;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import trikita.log.Log;
@@ -19,6 +19,7 @@ import static utils.Utils.humanReadableFormat;
 
 /**
  * Created by Axel on 26/09/2018.
+ * spreadsheet parsing class
  */
 public class XLSXParser {
 
@@ -27,15 +28,23 @@ public class XLSXParser {
     public static void init(String dirPath, String dbName){
         Log.d(TAG,"init...");
         List<String> files = findAllFilesWithExt(dirPath);
-        DataBase dataBase = new DataBase(dbName);
-        for (String path: files) {
-            List<CSVTagData> datas = parse(path);
-            for (CSVTagData data: datas) {
-                dataBase.addData(data);
+        double cpt = 0;
+        if(files.size() > 0){
+            DataBase dataBase = new DataBase(dbName);
+            for (String path: files) {
+                List<ExcelDataRow> entries = parse(path);
+                double total = entries.size();
+                for (ExcelDataRow data: entries) {
+                    dataBase.addData(data, cpt, total);
+                    cpt++;
+                }
+                entries.clear();
             }
-            datas.clear();
+        }else {
+            Log.i(TAG,String.format("no files found in directory:\n%s",dirPath));
         }
-        /*dataBase.addData(new CSVTagData("30/01/2015 00:00", "6:00:00 AM",
+
+        /*dataBase.addData(new ExcelDataRow("30/01/2015 00:00", "6:00:00 AM",
                 70101100019L, 12, 40101310285L,
                 "-75@", "BB","",0,
                 "","-3:3:-21:-14:25:29",
@@ -43,9 +52,9 @@ public class XLSXParser {
                 ));*/
     }
 
-    private static List<CSVTagData> parse(String filePath){
-        int i = 0;
-        List<CSVTagData> result = new ArrayList<>();
+    private static List<ExcelDataRow> parse(String filePath){
+        Log.d(TAG, String.format("start parsing %s ...", filePath));
+        List<ExcelDataRow> result = new ArrayList<>();
         Instant start = Instant.now();
         Instant start2 = Instant.now();
         try {
@@ -57,6 +66,7 @@ public class XLSXParser {
             Instant end2 = Instant.now();
             Log.d(TAG,"reading time= "+humanReadableFormat(Duration.between(start2, end2)));
             Log.d(TAG,"start parsing...");
+            int i = 0;
             for (Row currentRow : sheet) {
                 int j = 0;
                 i++;
@@ -72,7 +82,7 @@ public class XLSXParser {
                 if(data.size() < 16) continue;
 
                 try{
-                    result.add(new CSVTagData(data.get(0), data.get(1), Long.parseLong(data.get(2)), Integer.valueOf(data.get(3)),
+                    result.add(new ExcelDataRow(data.get(0), data.get(1), Long.parseLong(data.get(2)), Integer.valueOf(data.get(3)),
                             Long.valueOf(data.get(4)), data.get(5),
                             data.get(6), data.get(7),
                             Integer.valueOf(data.get(8)), data.get(9),

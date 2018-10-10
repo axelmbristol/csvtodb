@@ -7,5 +7,5 @@ import java.util.List;
  */
 public class Day {
     public String date;
-    private List<CSVTagData> CSVTagDatas;
+    private List<ExcelDataRow> ExcelDataRows;
 }
