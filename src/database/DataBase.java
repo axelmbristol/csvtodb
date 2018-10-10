@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.jsoniter.output.JsonStream;
 import com.mongodb.BasicDBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
@@ -15,7 +16,6 @@ import entities.ExcelDataRow;
 import org.bson.Document;
 import trikita.log.Log;
 
-import javax.print.Doc;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -32,10 +32,18 @@ public class DataBase {
     private static String TAG = DataBase.class.getName();
     private String name;
     private MongoDatabase database;
-    private boolean dataExist;
+    //private boolean dataExist;
+    private int cpt1 = 0;
+    private int cpt2 = 0;
+    private int cpt3 = 0;
+    private int jsonSize = 0;
+    private JsonParser parser;
+    private JsonArray days;
+    private String getItemIndexTime, isAnimalExistsTime, getAnimalDaysTime, getAnimalTime,getAnimalsArrayTime, jsonParseTime;
 
     public DataBase(String dataBaseName){
         this.name = dataBaseName;
+        this.parser = new JsonParser();
         Log.d(TAG, "mongodb init...");
         MongoClient mongoClient = new MongoClient(new MongoClientURI("mongodb://localhost:27017"));
         database = mongoClient.getDatabase(name);
@@ -45,31 +53,31 @@ public class DataBase {
         Instant start = Instant.now();
         Document farmDocument = createFarmDocument(ExcelDataRow);
         String collectionName = "_"+farmDocument.get("control_station").toString(); //need _ for MongoDB collection syntax convention.
-
-        //Log.d(TAG,"farm document="+farmDocument.toJson());
-
+        int operation = 0;
         if(!isCollectionExists(collectionName)){
-            //collection does not exist
             //Log.d(TAG, "collection does not exist. create new collection.");
             database.getCollection(collectionName).insertOne(farmDocument);
         }else{
-            //update collection
             //Log.d(TAG, "collection already exists. update collection "+collectionName+".");
             //Log.d(TAG, "checking if animal exists...");
-
             if(isAnimalExists(database.getCollection(collectionName), ExcelDataRow.getTagSerialNumber())){
                 //Log.d(TAG,"animal "+ ExcelDataRow.getTagSerialNumber().toString() +" does exist");
                 updateAnimal(ExcelDataRow, database.getCollection(collectionName));
+                operation = 1;
             }else{
                 //Log.d(TAG,"animal "+ ExcelDataRow.getTagSerialNumber().toString() +" does not exist.");
                 //Log.d(TAG,"adding new animal.");
                 addNewAnimal(ExcelDataRow, database.getCollection(collectionName));
+                operation = 2;
             }
         }
         Instant end = Instant.now();
-
-        System.out.println(String.format("progress:%.0f/%.0f  time:%6s  animal: %d...", currEntryNumb, totalEntryNumb ,
-                humanReadableFormat(Duration.between(start, end)), ExcelDataRow.getTagSerialNumber()));
+        System.out.println(String.format("progress: %.0f/%.0f  time: %6s  animal: %d  operation: %d  jsonSize:%d  cpt2:%d  cpt3:%3d  " +
+                        "jsonParseTime:%6s  isAnimalExistsTime:%6s  getAnimalDaysTime:%6s " +
+                        " getAnimalTime:%6s  getAnimalsArrayTime:%6s",
+                currEntryNumb, totalEntryNumb ,
+                humanReadableFormat(Duration.between(start, end)), ExcelDataRow.getTagSerialNumber(), operation, jsonSize, cpt2, cpt3,
+                jsonParseTime, isAnimalExistsTime, getAnimalDaysTime, getAnimalTime,getAnimalsArrayTime));
     }
 
     private void addNewAnimal(ExcelDataRow ExcelDataRow, MongoCollection collection){
@@ -82,7 +90,7 @@ public class DataBase {
         //Log.d(TAG, "updateAnimal...");
         if(isDayExists(collection, ExcelDataRow.getTagSerialNumber(), ExcelDataRow.getDate(), ExcelDataRow.getTime())){
             //Log.d(TAG, "day exist adding new data...");
-            if(!dataExist){
+            //if(!dataExist){
                 Integer index = getItemIndex(collection, ExcelDataRow.getTagSerialNumber(), ExcelDataRow.getDate());
                 if(index != null){
                     collection.updateOne(Filters.and(
@@ -90,10 +98,9 @@ public class DataBase {
                             ),
                             Updates.push("animals.$.days."+index+".tagData", createTagDocument(ExcelDataRow)));
                 }
-            }else{
-                Log.d(TAG, "data exists.");
-            }
-
+//            }else{
+//                Log.d(TAG, "data exists.");
+//            }
         }else{
             //Log.d(TAG, "day does not exist adding new day...");
             collection.updateOne(eq("animals.serial_number", ExcelDataRow.getTagSerialNumber()),
@@ -102,15 +109,18 @@ public class DataBase {
     }
 
     private Integer getItemIndex(MongoCollection<Document> collection, Long serialNumber, String date){
+        Instant start = Instant.now();
         Integer index = null;
-        JsonArray days = getAnimalDays(collection, serialNumber);
+        //days = getAnimalDays(collection, serialNumber);
         for (int i = days.size() - 1; i >= 0; i--) {
-            //Log.d(TAG, "i=" + i);
             if (((JsonObject) days.get(i)).get("date").getAsString().equals(date)) {
                 index = i;
+                cpt1 = i;
                 break;
             }
         }
+        Instant end = Instant.now();
+        getItemIndexTime = humanReadableFormat(Duration.between(start, end));
         //Log.d(TAG,"index="+index+" for date="+date+" serial_number="+serialNumber);
         return index;
     }
@@ -121,25 +131,28 @@ public class DataBase {
     }
 
     private boolean isAnimalExists(MongoCollection<Document> collection, Long serialNumber){
-        return getAnimal(collection, serialNumber).has("serial_number");
+        Instant start = Instant.now();
+        boolean result = getAnimal(collection, serialNumber).has("serial_number");
+        Instant end = Instant.now();
+        isAnimalExistsTime = humanReadableFormat(Duration.between(start, end));
+        return result;
     }
 
     private boolean isDayExists(MongoCollection<Document> collection, Long serialNumber, String day, String time){
+
         boolean dayExist = false;
-        dataExist = false;
-        JsonArray days = getAnimalDays(collection, serialNumber);
+        //dataExist = false;
+        days = getAnimalDays(collection, serialNumber);
         for (int i = days.size() - 1; i >= 0; i--) {
             if (((JsonObject) days.get(i)).get("date").getAsString().equals(day)) {
                 dayExist = true;
-
-                JsonArray tagData = ((JsonObject) days.get(i)).getAsJsonArray("tagData");
-                for (int j = tagData.size() - 1; j >= 0; j--) {
-                    if (((JsonObject) tagData.get(j)).get("time").getAsString().equals(time)) {
-                        dataExist = true;
-                        break;
-                    }
-                }
-
+//                JsonArray tagData = ((JsonObject) days.get(i)).getAsJsonArray("tagData");
+//                if (((JsonObject) tagData.get(0)).get("time").getAsString().equals(time)) {
+//                    //dataExist = true;
+//                    cpt2 = i;
+//                    break;
+//                }
+                cpt2 = i;
                 break;
             }
         }
@@ -147,45 +160,47 @@ public class DataBase {
         return dayExist;
     }
 
-    private boolean isAnimalDataExist(MongoCollection<Document> collection, Long serialNumber, String date, String time){
-        boolean dataExist = false;
-        JsonArray days = getAnimalDays(collection, serialNumber);
-        for (int i = days.size() - 1; i >= 0; i--) {
-            if (((JsonObject) days.get(i)).get("date").getAsString().equals(date)) {
-                JsonArray tagData = ((JsonObject) days.get(i)).getAsJsonArray("tagData");
-                for (int j = tagData.size() - 1; j >= 0; j--) {
-                    if (((JsonObject) tagData.get(j)).get("time").getAsString().equals(time)) {
-                        dataExist = true;
-                        break;
-                    }
-                }
-                break;
-            }
-        }
-        return dataExist;
-    }
-
     private JsonArray getAnimalDays(MongoCollection<Document> collection, Long serialNumber){
-        return getAnimal(collection, serialNumber).getAsJsonArray("days");
+        Instant start = Instant.now();
+        days = getAnimal(collection, serialNumber).getAsJsonArray("days");
+        Instant end = Instant.now();
+        getAnimalDaysTime = humanReadableFormat(Duration.between(start, end));
+        return days;
     }
 
     private JsonObject getAnimal(MongoCollection<Document> collection, Long serialNumber){
+        Instant start = Instant.now();
         JsonObject result = new JsonObject();
         JsonArray animals = getAnimalsArray(collection);
+        cpt3 = 0;
         for(JsonElement animal : animals){
+            cpt3++;
             JsonElement json = ((JsonObject) animal).get("serial_number");
             Long sn = ((JsonObject) json).get("$numberLong").getAsLong();
             if (!sn.equals(serialNumber)) continue;
             result = (JsonObject)animal;
             break;
         }
+        Instant end = Instant.now();
+        getAnimalTime = humanReadableFormat(Duration.between(start, end));
+
         //Log.d(TAG,"getAnimal result="+result+" size="+result.size());
         return result;
     }
 
     private JsonArray getAnimalsArray(MongoCollection<Document> collection){
-        return (new JsonParser()).parse(Objects.requireNonNull(collection.find().first()).toJson())
-                .getAsJsonObject().getAsJsonArray("animals");
+        Instant start = Instant.now();
+        String json = Objects.requireNonNull(collection.find().first()).toJson();
+        jsonSize = json.length();
+        Instant end = Instant.now();
+        getAnimalsArrayTime = humanReadableFormat(Duration.between(start, end));
+
+        start = Instant.now();
+        JsonArray animals = parser.parse(json).getAsJsonObject().getAsJsonArray("animals");
+        end = Instant.now();
+        jsonParseTime = humanReadableFormat(Duration.between(start, end));
+
+        return animals;
     }
 
     private Document createFarmDocument(ExcelDataRow ExcelDataRow){
