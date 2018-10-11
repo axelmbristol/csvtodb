@@ -31,18 +31,22 @@ public class XLSXParser {
     public static void init(String dirPath, String dbName){
         Log.d(TAG,"init...");
         List<String> files = findAllFilesWithExt(dirPath);
+        List<String> logs = new ArrayList<>();
 
         if(files.size() > 0){
             DataBase dataBase = new DataBase(dbName);
+            Log.d(TAG,"new db created dbName="+dbName);
             for (String path: files) {
+                Instant startCurrFileProcessing = Instant.now();
                 double currFileEntry = 0;
                 List<ExcelDataRow> entries = parse(path);
                 List<List<List<ExcelDataRow>>> groups = groupEntries(entries);
                 double currFileTotalEntries = entries.size();
                 dataBase.init(groups.get(0).get(0).get(0));
-                int cptEntries = 0;
-                int keepCount = 3; //change this value to choose how many entries per days should be kept
-                Instant start = Instant.now(); Instant end;
+                double cptEntries = 0;
+                double ENTRY_COUNT = currFileTotalEntries; //change this value to choose how many entries per days should be kept
+                Instant startEntryProcessing = Instant.now();
+                Instant endEntryProcessing;
                 for (List<List<ExcelDataRow>> animal: groups) {
                     dataBase.addAnimal(animal.get(0).get(0));
                     int i = 0;
@@ -52,10 +56,10 @@ public class XLSXParser {
                             dataBase.addEntry(entryRow, i);
                             cptEntries++;
                             currFileEntry++;
-                            end = Instant.now();
+                            endEntryProcessing = Instant.now();
                             System.out.println(String.format("progress: %.0f/%.0f  %d%%  %s", currFileEntry, currFileTotalEntries,
-                                    (int)(currFileEntry/currFileTotalEntries), humanReadableFormat(Duration.between(start, end))));
-                            if(cptEntries > keepCount - 1){
+                                    (int)((currFileEntry/currFileTotalEntries)*100.0), humanReadableFormat(Duration.between(startEntryProcessing, endEntryProcessing))));
+                            if(cptEntries > ENTRY_COUNT - 1){
                                 cptEntries = 0;
                                 break;
                             }
@@ -63,17 +67,16 @@ public class XLSXParser {
                         i++;
                     }
                 }
+                Instant endCurrFileProcessing = Instant.now();
+                logs.add(String.format("%s to process file %s",
+                        humanReadableFormat(Duration.between(startCurrFileProcessing, endCurrFileProcessing)), path));
             }
+            System.out.println("**********Transfer to db finished**********");
+            for (String log: logs) {System.out.println(log);}
+            System.out.println("*******************************************");
         }else {
             Log.i(TAG,String.format("no files found in directory:\n%s",dirPath));
         }
-
-        /*dataBase.addData(new ExcelDataRow("30/01/2015 00:00", "6:00:00 AM",
-                70101100019L, 12, 40101310285L,
-                "-75@", "BB","",0,
-                "","-3:3:-21:-14:25:29",
-                "I",6
-                ));*/
     }
 
     private static List<List<List<ExcelDataRow>>> groupEntries(List<ExcelDataRow> entries){

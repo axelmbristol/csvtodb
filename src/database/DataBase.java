@@ -27,6 +27,8 @@ public class DataBase {
     public DataBase(String dataBaseName){
         Log.d(TAG, "mongodb init...");
         MongoClient mongoClient = new MongoClient(new MongoClientURI("mongodb://localhost:27017"));
+        Log.d(TAG, "purge...");
+        mongoClient.getDatabase(dataBaseName).drop();
         database = mongoClient.getDatabase(dataBaseName);
     }
 
