@@ -42,18 +42,16 @@ public class XLSXParser {
                 List<ExcelDataRow> entries = parse(path);
                 List<List<List<ExcelDataRow>>> groups = groupEntries(entries);
                 double currFileTotalEntries = entries.size();
-                dataBase.init(groups.get(0).get(0).get(0));
-                double cptEntries = 0;
-                double ENTRY_COUNT = currFileTotalEntries; //change this value to choose how many entries per days should be kept
-                Instant startEntryProcessing = Instant.now();
-                Instant endEntryProcessing;
-                for (List<List<ExcelDataRow>> animal: groups) {
-                    dataBase.addAnimal(animal.get(0).get(0));
-                    int i = 0;
-                    for (List<ExcelDataRow> day: animal) {
-                        dataBase.addDay(day.get(0));
-                        for (ExcelDataRow entryRow: day) {
-                            dataBase.addEntry(entryRow, i);
+
+                for(List<List<ExcelDataRow>> day : groups){
+                    dataBase.init(day.get(0).get(0));//create new collection for the day
+                    double cptEntries = 0;
+                    double ENTRY_COUNT = currFileTotalEntries; //change this value to choose how many entries per days should be kept
+                    Instant startEntryProcessing = Instant.now(); Instant endEntryProcessing;
+                    for (List<ExcelDataRow> animal : day){
+                        dataBase.addAnimal(animal.get(0));
+                        for (ExcelDataRow entryRow : animal){
+                            dataBase.addEntry(entryRow);
                             cptEntries++;
                             currFileEntry++;
                             endEntryProcessing = Instant.now();
@@ -64,9 +62,35 @@ public class XLSXParser {
                                 break;
                             }
                         }
-                        i++;
                     }
                 }
+
+//                dataBase.init(groups.get(0).get(0).get(0));
+//
+//                double cptEntries = 0;
+//                double ENTRY_COUNT = currFileTotalEntries; //change this value to choose how many entries per days should be kept
+//                Instant startEntryProcessing = Instant.now();
+//                Instant endEntryProcessing;
+//                for (List<List<ExcelDataRow>> animal: groups) {
+//                    dataBase.addAnimal(animal.get(0).get(0));
+//                    int i = 0;
+//                    for (List<ExcelDataRow> day: animal) {
+//                        dataBase.addDay(day.get(0));
+//                        for (ExcelDataRow entryRow: day) {
+//                            dataBase.addEntry(entryRow, i);
+//                            cptEntries++;
+//                            currFileEntry++;
+//                            endEntryProcessing = Instant.now();
+//                            System.out.println(String.format("progress: %.0f/%.0f  %d%%  %s", currFileEntry, currFileTotalEntries,
+//                                    (int)((currFileEntry/currFileTotalEntries)*100.0), humanReadableFormat(Duration.between(startEntryProcessing, endEntryProcessing))));
+//                            if(cptEntries > ENTRY_COUNT - 1){
+//                                cptEntries = 0;
+//                                break;
+//                            }
+//                        }
+//                        i++;
+//                    }
+//                }
                 Instant endCurrFileProcessing = Instant.now();
                 logs.add(String.format("%s to process file %s",
                         humanReadableFormat(Duration.between(startCurrFileProcessing, endCurrFileProcessing)), path));
@@ -83,20 +107,20 @@ public class XLSXParser {
         List<List<List<ExcelDataRow>>> sortedFinal = new ArrayList<>();
         Instant start = Instant.now();
         entries.sort(Comparator.comparing(ExcelDataRow::getTagSerialNumber));
-        List<List<ExcelDataRow>> sortedBySerialNumber = entries.stream()
-                .collect(Collectors.groupingBy(ExcelDataRow::getTagSerialNumber))
+        List<List<ExcelDataRow>> groupedByDate = entries.stream()
+                .collect(Collectors.groupingBy(ExcelDataRow::getDate))
                 .entrySet().stream()
                 .map(e -> { List<ExcelDataRow> c = new ArrayList<>(); c.addAll(e.getValue()); return c; })
                 .collect(Collectors.toList());
 
-        for (List<ExcelDataRow> row: sortedBySerialNumber) {
-            List<List<ExcelDataRow>> data = row.stream()
-                    .collect(Collectors.groupingBy(ExcelDataRow::getDate))
+        for (List<ExcelDataRow> row: groupedByDate) {
+            List<List<ExcelDataRow>> groupedBySerialNumber = row.stream()
+                    .collect(Collectors.groupingBy(ExcelDataRow::getTagSerialNumber))
                     .entrySet().stream()
                     .map(e -> { List<ExcelDataRow> c = new ArrayList<>(); c.addAll(e.getValue()); return c; })
                     .collect(Collectors.toList());
-            data.sort(Comparator.comparing(e -> e.get(0).getDate()));
-            sortedFinal.add(data);
+            groupedBySerialNumber.sort(Comparator.comparing(e -> e.get(0).getDate()));
+            sortedFinal.add(groupedBySerialNumber);
         }
 
         Instant end = Instant.now();

@@ -59,12 +59,12 @@ public class DataBase {
                 Updates.addToSet("animals.$.days", d));
     }
 
-    public void addEntry(ExcelDataRow ExcelDataRow, int index){
+    public void addEntry(ExcelDataRow ExcelDataRow){
         BasicDBObject d = createTagDocument(ExcelDataRow);
         database.getCollection(collectionName).updateOne(Filters.and(
                 eq("animals.serial_number", ExcelDataRow.getTagSerialNumber())
                 ),
-                Updates.push("animals.$.days."+index+".tagData", d));
+                Updates.push("animals.$.tagData", d));
     }
 
     private boolean isCollectionExists(String collectionName){
@@ -193,11 +193,11 @@ public class DataBase {
     }
 
     private BasicDBObject createAnimalDocument(ExcelDataRow ExcelDataRow){
-        List<BasicDBObject> days = new ArrayList<>();
+        List<BasicDBObject> tags = new ArrayList<>();
         //days.add(createDayDocument(ExcelDataRow));
         return new BasicDBObject("_id", ExcelDataRow.getTagSerialNumber())
                 .append("serial_number", ExcelDataRow.getTagSerialNumber())
-                .append("days",days);
+                .append("tagData", tags);
     }
 
     private BasicDBObject createDayDocument(ExcelDataRow ExcelDataRow){
