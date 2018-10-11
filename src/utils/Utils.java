@@ -26,9 +26,9 @@ public class Utils {
                     + " including those in subdirectories");
             List<File> files = (List<File>) FileUtils.listFiles(dir, extensions, true);
             for (File file : files) {
-                Log.d(TAG,"file: " + file.getCanonicalPath());
                 if(file.getCanonicalPath().contains("~")) continue;
                 paths.add(file.getCanonicalPath());
+                Log.d(TAG,"file: " + file.getCanonicalPath());
             }
         } catch (IOException | IllegalArgumentException e) {
             Log.e(TAG,"error while getting file paths in directory", e);

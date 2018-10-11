@@ -31,47 +31,38 @@ public class XLSXParser {
     public static void init(String dirPath, String dbName){
         Log.d(TAG,"init...");
         List<String> files = findAllFilesWithExt(dirPath);
-        double currEntryNumb = 0;
+
         if(files.size() > 0){
             DataBase dataBase = new DataBase(dbName);
             for (String path: files) {
+                double currFileEntry = 0;
                 List<ExcelDataRow> entries = parse(path);
                 List<List<List<ExcelDataRow>>> groups = groupEntries(entries);
-
-                double totalEntryNumb = entries.size();
-
+                double currFileTotalEntries = entries.size();
                 dataBase.init(groups.get(0).get(0).get(0));
-
-                int i = 0;
+                int cptEntries = 0;
+                int keepCount = 3; //change this value to choose how many entries per days should be kept
+                Instant start = Instant.now(); Instant end;
                 for (List<List<ExcelDataRow>> animal: groups) {
-                    //add animal
                     dataBase.addAnimal(animal.get(0).get(0));
+                    int i = 0;
                     for (List<ExcelDataRow> day: animal) {
-                        //add day
                         dataBase.addDay(day.get(0));
                         for (ExcelDataRow entryRow: day) {
-                            //add entry
                             dataBase.addEntry(entryRow, i);
-                            currEntryNumb++;
-                            System.out.println(String.format("progress: %.0f/%.0f ", currEntryNumb, totalEntryNumb ));
-                            if(i > 5) break;
+                            cptEntries++;
+                            currFileEntry++;
+                            end = Instant.now();
+                            System.out.println(String.format("progress: %.0f/%.0f  %d%%  %s", currFileEntry, currFileTotalEntries,
+                                    (int)(currFileEntry/currFileTotalEntries), humanReadableFormat(Duration.between(start, end))));
+                            if(cptEntries > keepCount - 1){
+                                cptEntries = 0;
+                                break;
+                            }
                         }
                         i++;
                     }
                 }
-
-
-//                List<ExcelDataRow> flatenSortedList = groups.stream()
-//                                .flatMap(List::stream)
-//                                .flatMap(List::stream)
-//                                .collect(Collectors.toList());
-
-
-//                for (ExcelDataRow data: entries) {
-//                    dataBase.addData(data, cpt, total);
-//                    cpt++;
-//                }
-//                entries.clear();
             }
         }else {
             Log.i(TAG,String.format("no files found in directory:\n%s",dirPath));
@@ -101,6 +92,7 @@ public class XLSXParser {
                     .entrySet().stream()
                     .map(e -> { List<ExcelDataRow> c = new ArrayList<>(); c.addAll(e.getValue()); return c; })
                     .collect(Collectors.toList());
+            data.sort(Comparator.comparing(e -> e.get(0).getDate()));
             sortedFinal.add(data);
         }
 
@@ -116,7 +108,7 @@ public class XLSXParser {
         Instant start2 = Instant.now();
         try {
             DataFormatter df = new DataFormatter();
-            Log.d(TAG,"read file...");
+            Log.d(TAG,"reading file...");
             FileInputStream excelFile = new FileInputStream(new File(filePath));
             Workbook workbook = new XSSFWorkbook(excelFile);
             Sheet sheet = workbook.getSheetAt(0);
@@ -126,15 +118,12 @@ public class XLSXParser {
             int i = 0;
             for (Row currentRow : sheet) {
                 //Log.d(TAG,"reading...");
-                int j = 0;
                 i++;
-                if(i < 3) continue;
-                //if(i > 4) break;
+                if(i < 3) continue;//skip header
                 List<String> data = new ArrayList<>();
                 for (Cell currentCell : currentRow) {
                     data.add(df.formatCellValue(currentCell));
                     //System.out.print(df.formatCellValue(currentCell)+"   ");
-                    j++;
                 }
                 //System.out.print(data.size()+"\n");
                 if(data.size() < 16) continue;
@@ -151,10 +140,7 @@ public class XLSXParser {
                     Log.e(TAG,"error while parsing data", e);
                 }
             }
-            //System.out.println(result);
-        } catch (IOException e) {
-            Log.e(TAG, "error while parsing xlsx file", e);
-        }
+        } catch (IOException e) {Log.e(TAG, "error while parsing xlsx file", e);}
 
         Instant end = Instant.now();
         Log.d(TAG,"parsing time= "+humanReadableFormat(Duration.between(start, end)));
