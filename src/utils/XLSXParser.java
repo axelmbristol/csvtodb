@@ -12,7 +12,10 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static utils.Utils.findAllFilesWithExt;
 import static utils.Utils.humanReadableFormat;
@@ -28,17 +31,47 @@ public class XLSXParser {
     public static void init(String dirPath, String dbName){
         Log.d(TAG,"init...");
         List<String> files = findAllFilesWithExt(dirPath);
-        double cpt = 0;
+        double currEntryNumb = 0;
         if(files.size() > 0){
             DataBase dataBase = new DataBase(dbName);
             for (String path: files) {
                 List<ExcelDataRow> entries = parse(path);
-                double total = entries.size();
-                for (ExcelDataRow data: entries) {
-                    dataBase.addData(data, cpt, total);
-                    cpt++;
+                List<List<List<ExcelDataRow>>> groups = groupEntries(entries);
+
+                double totalEntryNumb = entries.size();
+
+                dataBase.init(groups.get(0).get(0).get(0));
+
+                for (List<List<ExcelDataRow>> animal: groups) {
+                    //add animal
+                    dataBase.addAnimal(animal.get(0).get(0));
+                    for (List<ExcelDataRow> day: animal) {
+                        //add day
+                        dataBase.addDay(day.get(0));
+                        int i = 0;
+                        for (ExcelDataRow entryRow: day) {
+                            //add entry
+                            dataBase.addEntry(entryRow, i);
+                            i++;
+                            currEntryNumb++;
+                            System.out.println(String.format("progress: %.0f/%.0f ", currEntryNumb, totalEntryNumb ));
+                            if(i > 5) break;
+                        }
+                    }
                 }
-                entries.clear();
+
+
+//                List<ExcelDataRow> flatenSortedList = groups.stream()
+//                                .flatMap(List::stream)
+//                                .flatMap(List::stream)
+//                                .collect(Collectors.toList());
+
+
+//                for (ExcelDataRow data: entries) {
+//                    dataBase.addData(data, cpt, total);
+//                    cpt++;
+//                }
+//                entries.clear();
             }
         }else {
             Log.i(TAG,String.format("no files found in directory:\n%s",dirPath));
@@ -50,6 +83,30 @@ public class XLSXParser {
                 "","-3:3:-21:-14:25:29",
                 "I",6
                 ));*/
+    }
+
+    private static List<List<List<ExcelDataRow>>> groupEntries(List<ExcelDataRow> entries){
+        List<List<List<ExcelDataRow>>> sortedFinal = new ArrayList<>();
+        Instant start = Instant.now();
+        entries.sort(Comparator.comparing(ExcelDataRow::getTagSerialNumber));
+        List<List<ExcelDataRow>> sortedBySerialNumber = entries.stream()
+                .collect(Collectors.groupingBy(ExcelDataRow::getTagSerialNumber))
+                .entrySet().stream()
+                .map(e -> { List<ExcelDataRow> c = new ArrayList<>(); c.addAll(e.getValue()); return c; })
+                .collect(Collectors.toList());
+
+        for (List<ExcelDataRow> row: sortedBySerialNumber) {
+            List<List<ExcelDataRow>> data = row.stream()
+                    .collect(Collectors.groupingBy(ExcelDataRow::getDate))
+                    .entrySet().stream()
+                    .map(e -> { List<ExcelDataRow> c = new ArrayList<>(); c.addAll(e.getValue()); return c; })
+                    .collect(Collectors.toList());
+            sortedFinal.add(data);
+        }
+
+        Instant end = Instant.now();
+        Log.d(TAG,"sorting time= "+humanReadableFormat(Duration.between(start, end)));
+        return sortedFinal;
     }
 
     private static List<ExcelDataRow> parse(String filePath){
@@ -68,6 +125,7 @@ public class XLSXParser {
             Log.d(TAG,"start parsing...");
             int i = 0;
             for (Row currentRow : sheet) {
+                //Log.d(TAG,"reading...");
                 int j = 0;
                 i++;
                 if(i < 3) continue;

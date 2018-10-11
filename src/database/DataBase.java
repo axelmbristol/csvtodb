@@ -39,6 +39,7 @@ public class DataBase {
     private int jsonSize = 0;
     private JsonParser parser;
     private JsonArray days;
+    private String collectionName;
     private String getItemIndexTime, isAnimalExistsTime, getAnimalDaysTime, getAnimalTime,getAnimalsArrayTime, jsonParseTime;
 
     public DataBase(String dataBaseName){
@@ -47,12 +48,20 @@ public class DataBase {
         Log.d(TAG, "mongodb init...");
         MongoClient mongoClient = new MongoClient(new MongoClientURI("mongodb://localhost:27017"));
         database = mongoClient.getDatabase(name);
+
+
+    }
+
+    public void init(ExcelDataRow excelDataRow){
+        Document farmDocument = createFarmDocument(excelDataRow);
+        collectionName = "_"+farmDocument.get("control_station").toString(); //need _ for MongoDB collection syntax convention.
+        database.getCollection(collectionName).insertOne(farmDocument);
     }
 
     public void addData(ExcelDataRow ExcelDataRow, double currEntryNumb, double totalEntryNumb){
         Instant start = Instant.now();
         Document farmDocument = createFarmDocument(ExcelDataRow);
-        String collectionName = "_"+farmDocument.get("control_station").toString(); //need _ for MongoDB collection syntax convention.
+        collectionName = "_"+farmDocument.get("control_station").toString(); //need _ for MongoDB collection syntax convention.
         int operation = 0;
         if(!isCollectionExists(collectionName)){
             //Log.d(TAG, "collection does not exist. create new collection.");
@@ -80,10 +89,27 @@ public class DataBase {
                 jsonParseTime, isAnimalExistsTime, getAnimalDaysTime, getAnimalTime,getAnimalsArrayTime));
     }
 
+    public void addAnimal(ExcelDataRow excelDataRow){
+        collectionName = "_"+excelDataRow.getControlStation().toString(); //need _ for MongoDB collection syntax convention.
+        addNewAnimal(excelDataRow, database.getCollection(collectionName));
+    }
+
     private void addNewAnimal(ExcelDataRow ExcelDataRow, MongoCollection collection){
         collection.updateOne(eq("_id",
                 ExcelDataRow.getControlStation()),
                 Updates.addToSet("animals", createAnimalDocument(ExcelDataRow)));
+    }
+
+    public void addDay(ExcelDataRow ExcelDataRow){
+        database.getCollection(collectionName).updateOne(eq("animals.serial_number", ExcelDataRow.getTagSerialNumber()),
+                Updates.addToSet("animals.$.days", createDayDocument(ExcelDataRow)));
+    }
+
+    public void addEntry(ExcelDataRow ExcelDataRow, int index){
+        database.getCollection(collectionName).updateOne(Filters.and(
+                eq("animals.serial_number", ExcelDataRow.getTagSerialNumber())
+                ),
+                Updates.push("animals.$.days."+index+".tagData", createTagDocument(ExcelDataRow)));
     }
 
     private void updateAnimal(ExcelDataRow ExcelDataRow, MongoCollection<Document> collection){
@@ -142,7 +168,7 @@ public class DataBase {
 
         boolean dayExist = false;
         //dataExist = false;
-        days = getAnimalDays(collection, serialNumber);
+        getAnimalDays(collection, serialNumber);
         for (int i = days.size() - 1; i >= 0; i--) {
             if (((JsonObject) days.get(i)).get("date").getAsString().equals(day)) {
                 dayExist = true;
@@ -213,7 +239,7 @@ public class DataBase {
 
     private BasicDBObject createAnimalDocument(ExcelDataRow ExcelDataRow){
         List<BasicDBObject> days = new ArrayList<>();
-        days.add(createDayDocument(ExcelDataRow));
+        //days.add(createDayDocument(ExcelDataRow));
         return new BasicDBObject("_id", ExcelDataRow.getTagSerialNumber())
                 .append("serial_number", ExcelDataRow.getTagSerialNumber())
                 .append("days",days);
@@ -221,7 +247,7 @@ public class DataBase {
 
     private BasicDBObject createDayDocument(ExcelDataRow ExcelDataRow){
         List<BasicDBObject> tags = new ArrayList<>();
-        tags.add(createTagDocument(ExcelDataRow));
+        //tags.add(createTagDocument(ExcelDataRow));
         return new BasicDBObject("_id", ExcelDataRow.getDate())
                 .append("date", ExcelDataRow.getDate())
                 .append("tagData", tags);

@@ -17,15 +17,10 @@
       </configuration>
     </facet>
   </component>
-  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_5" inherit-compiler-output="false">
-    <output-test url="file://$MODULE_DIR$/../../build/classes/test" />
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_5">
+    <output-test url="file://$MODULE_DIR$/../../out/test/classes" />
     <exclude-output />
-    <content url="file://$MODULE_DIR$/../../src/test">
-      <sourceFolder url="file://$MODULE_DIR$/../../src/test/groovy" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/../../src/test/java" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/../../src/test/kotlin" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/../../src/test/resources" type="java-test-resource" />
-    </content>
+    <content url="file://$MODULE_DIR$/../../src/test" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="csvtodb_main" />
     <orderEntry type="library" name="Gradle: org.jetbrains.kotlin:kotlin-stdlib:1.0.4" level="project" />
@@ -33,12 +28,12 @@
     <orderEntry type="library" name="Gradle: org.mongodb:mongo-java-driver:3.7.1" level="project" />
     <orderEntry type="library" name="Gradle: com.google.code.gson:gson:2.8.5" level="project" />
     <orderEntry type="library" name="Gradle: co.trikita:log:1.1.5" level="project" />
+    <orderEntry type="library" name="Gradle: org.apache.poi:poi-ooxml:4.0.0" level="project" />
+    <orderEntry type="library" name="Gradle: org.apache.poi:poi:4.0.0" level="project" />
+    <orderEntry type="library" name="Gradle: org.apache.commons:commons-collections4:4.2" level="project" />
+    <orderEntry type="library" name="Gradle: com.fasterxml.jackson.core:jackson-databind:2.7.3" level="project" />
     <orderEntry type="library" name="Gradle: com.fasterxml.jackson.core:jackson-core:2.7.3" level="project" />
     <orderEntry type="library" name="Gradle: com.fasterxml.jackson.core:jackson-annotations:2.7.3" level="project" />
-    <orderEntry type="library" name="Gradle: com.fasterxml.jackson.core:jackson-databind:2.7.3" level="project" />
-    <orderEntry type="library" name="Gradle: org.apache.poi:poi:4.0.0" level="project" />
-    <orderEntry type="library" name="Gradle: org.apache.poi:poi-ooxml:4.0.0" level="project" />
-    <orderEntry type="library" name="Gradle: org.apache.commons:commons-io:1.3.2" level="project" />
     <orderEntry type="library" name="Gradle: commons-cli:commons-cli:1.2" level="project" />
     <orderEntry type="library" name="Gradle: com.jsoniter:jsoniter:0.9.16" level="project" />
     <orderEntry type="library" name="Gradle: junit:junit:4.11" level="project" />
@@ -50,7 +45,6 @@
     <orderEntry type="library" name="Gradle: commons-io:commons-io:1.3.2" level="project" />
     <orderEntry type="library" name="Gradle: org.hamcrest:hamcrest-core:1.3" level="project" />
     <orderEntry type="library" name="Gradle: org.apache.xmlbeans:xmlbeans:3.0.1" level="project" />
-    <orderEntry type="library" name="Gradle: org.apache.commons:commons-collections4:4.2" level="project" />
   </component>
   <component name="TestModuleProperties" production-module="csvtodb_main" />
 </module>
