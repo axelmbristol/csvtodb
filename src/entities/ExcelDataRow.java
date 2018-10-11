@@ -103,128 +103,52 @@ public class ExcelDataRow {
         return date;
     }
 
-    public void setDate(String date) {
-        this.date = date;
-    }
-
     public String getTime() {
         return time;
-    }
-
-    public void setTime(String time) {
-        this.time = time;
     }
 
     public Long getControlStation() {
         return controlStation;
     }
 
-    public void setControlStation(Long controlStation) {
-        this.controlStation = controlStation;
-    }
-
     public Integer getType12TagMessages() {
         return type12TagMessages;
-    }
-
-    public void setType12TagMessages(Integer type12TagMessages) {
-        this.type12TagMessages = type12TagMessages;
     }
 
     public Long getTagSerialNumber() {
         return tagSerialNumber;
     }
 
-    public void setTagSerialNumber(Long tagSerialNumber) {
-        this.tagSerialNumber = tagSerialNumber;
-    }
-
     public String getSignalStrength() {
         return signalStrength;
-    }
-
-    public void setSignalStrength(String signalStrength) {
-        this.signalStrength = signalStrength;
     }
 
     public String getBatteryVoltage() {
         return batteryVoltage;
     }
 
-    public void setBatteryVoltage(String batteryVoltage) {
-        this.batteryVoltage = batteryVoltage;
-    }
-
     public String getFirstAccelerometerCounter() {
         return firstAccelerometerCounter;
-    }
-
-    public void setFirstAccelerometerCounter(String firstAccelerometerCounter) {
-        this.firstAccelerometerCounter = firstAccelerometerCounter;
     }
 
     public Integer getFirstSensorValue() {
         return firstSensorValue;
     }
 
-    public void setFirstSensorValue(Integer firstSensorValue) {
-        this.firstSensorValue = firstSensorValue;
-    }
-
     public String getSecondAccelerometerCounter() {
         return secondAccelerometerCounter;
-    }
-
-    public void setSecondAccelerometerCounter(String secondAccelerometerCounter) {
-        this.secondAccelerometerCounter = secondAccelerometerCounter;
     }
 
     public String getSecondSensorValuesXYZ() {
         return secondSensorValuesXYZ;
     }
 
-    public void setSecondSensorValuesXYZ(String secondSensorValuesXYZ) {
-        this.secondSensorValuesXYZ = secondSensorValuesXYZ;
-    }
-
     public String getCorrelationIdentifier() {
         return correlationIdentifier;
     }
 
-    public void setCorrelationIdentifier(String correlationIdentifier) {
-        this.correlationIdentifier = correlationIdentifier;
-    }
-
     public Integer getCorrelationValue() {
         return correlationValue;
-    }
-
-    public void setCorrelationValue(Integer correlationValue) {
-        this.correlationValue = correlationValue;
-    }
-
-    public String getFIELD14() {
-        return fIELD14;
-    }
-
-    public void setFIELD14(String fIELD14) {
-        this.fIELD14 = fIELD14;
-    }
-
-    public Integer getFIELD15() {
-        return fIELD15;
-    }
-
-    public void setFIELD15(Integer fIELD15) {
-        this.fIELD15 = fIELD15;
-    }
-
-    public Double getFIELD16() {
-        return fIELD16;
-    }
-
-    public void setFIELD16(Double fIELD16) {
-        this.fIELD16 = fIELD16;
     }
 
     @Override

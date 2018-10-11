@@ -28,6 +28,8 @@ public class XLSXParser {
 
     private static String TAG = XLSXParser.class.getName();
 
+    private static double ENTRY_COUNT = 0.0;
+
     public static void init(String dirPath, String dbName){
         Log.d(TAG,"init...");
         List<String> files = findAllFilesWithExt(dirPath);
@@ -43,11 +45,12 @@ public class XLSXParser {
                 List<List<List<ExcelDataRow>>> groups = groupEntries(entries);
                 double currFileTotalEntries = entries.size();
 
+                Instant startEntryProcessing = Instant.now(); Instant endEntryProcessing;
+
                 for(List<List<ExcelDataRow>> day : groups){
                     dataBase.init(day.get(0).get(0));//create new collection for the day
                     double cptEntries = 0;
-                    double ENTRY_COUNT = currFileTotalEntries; //change this value to choose how many entries per days should be kept
-                    Instant startEntryProcessing = Instant.now(); Instant endEntryProcessing;
+                    ENTRY_COUNT = currFileTotalEntries; //change this value to choose how many entries per days should be kept
                     for (List<ExcelDataRow> animal : day){
                         dataBase.addAnimal(animal.get(0));
                         for (ExcelDataRow entryRow : animal){
@@ -64,33 +67,6 @@ public class XLSXParser {
                         }
                     }
                 }
-
-//                dataBase.init(groups.get(0).get(0).get(0));
-//
-//                double cptEntries = 0;
-//                double ENTRY_COUNT = currFileTotalEntries; //change this value to choose how many entries per days should be kept
-//                Instant startEntryProcessing = Instant.now();
-//                Instant endEntryProcessing;
-//                for (List<List<ExcelDataRow>> animal: groups) {
-//                    dataBase.addAnimal(animal.get(0).get(0));
-//                    int i = 0;
-//                    for (List<ExcelDataRow> day: animal) {
-//                        dataBase.addDay(day.get(0));
-//                        for (ExcelDataRow entryRow: day) {
-//                            dataBase.addEntry(entryRow, i);
-//                            cptEntries++;
-//                            currFileEntry++;
-//                            endEntryProcessing = Instant.now();
-//                            System.out.println(String.format("progress: %.0f/%.0f  %d%%  %s", currFileEntry, currFileTotalEntries,
-//                                    (int)((currFileEntry/currFileTotalEntries)*100.0), humanReadableFormat(Duration.between(startEntryProcessing, endEntryProcessing))));
-//                            if(cptEntries > ENTRY_COUNT - 1){
-//                                cptEntries = 0;
-//                                break;
-//                            }
-//                        }
-//                        i++;
-//                    }
-//                }
                 Instant endCurrFileProcessing = Instant.now();
                 logs.add(String.format("%s to process file %s",
                         humanReadableFormat(Duration.between(startCurrFileProcessing, endCurrFileProcessing)), path));

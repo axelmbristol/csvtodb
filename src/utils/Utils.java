@@ -13,7 +13,7 @@ import java.util.List;
  * Created by Axel on 05/10/2018.
  * Utils class
  */
-public class Utils {
+class Utils {
 
     private static String TAG = Utils.class.getName();
 
@@ -36,7 +36,7 @@ public class Utils {
         return paths;
     }
 
-    public static String humanReadableFormat(Duration duration) {
+    static String humanReadableFormat(Duration duration) {
         return duration.toString()
                 .substring(2)
                 .replaceAll("(\\d[HMS])(?!$)", "$1 ")

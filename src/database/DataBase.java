@@ -53,11 +53,11 @@ public class DataBase {
                 Updates.addToSet("animals", createAnimalDocument(ExcelDataRow)));
     }
 
-    public void addDay(ExcelDataRow ExcelDataRow){
-        BasicDBObject d = createDayDocument(ExcelDataRow);
-        database.getCollection(collectionName).updateOne(eq("animals.serial_number", ExcelDataRow.getTagSerialNumber()),
-                Updates.addToSet("animals.$.days", d));
-    }
+//    public void addDay(ExcelDataRow ExcelDataRow){
+//        BasicDBObject d = createDayDocument(ExcelDataRow);
+//        database.getCollection(collectionName).updateOne(eq("animals.serial_number", ExcelDataRow.getTagSerialNumber()),
+//                Updates.addToSet("animals.$.days", d));
+//    }
 
     public void addEntry(ExcelDataRow ExcelDataRow){
         BasicDBObject d = createTagDocument(ExcelDataRow);
@@ -200,13 +200,13 @@ public class DataBase {
                 .append("tagData", tags);
     }
 
-    private BasicDBObject createDayDocument(ExcelDataRow ExcelDataRow){
-        List<BasicDBObject> tags = new ArrayList<>();
-        //tags.add(createTagDocument(ExcelDataRow));
-        return new BasicDBObject("_id", ExcelDataRow.getDate())
-                .append("date", ExcelDataRow.getDate())
-                .append("tagData", tags);
-    }
+//    private BasicDBObject createDayDocument(ExcelDataRow ExcelDataRow){
+//        List<BasicDBObject> tags = new ArrayList<>();
+//        //tags.add(createTagDocument(ExcelDataRow));
+//        return new BasicDBObject("_id", ExcelDataRow.getDate())
+//                .append("date", ExcelDataRow.getDate())
+//                .append("tagData", tags);
+//    }
 
     private BasicDBObject createTagDocument(ExcelDataRow ExcelDataRow){
         return new BasicDBObject("_id", ExcelDataRow.getTime())
