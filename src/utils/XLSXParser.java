@@ -100,7 +100,7 @@ public class XLSXParser {
         }
 
         Instant end = Instant.now();
-        Log.d(TAG,"sorting time= "+humanReadableFormat(Duration.between(start, end)));
+        Log.d(TAG,"sorting time "+humanReadableFormat(Duration.between(start, end)));
         return sortedFinal;
     }
 
@@ -116,7 +116,7 @@ public class XLSXParser {
             Workbook workbook = new XSSFWorkbook(excelFile);
             Sheet sheet = workbook.getSheetAt(0);
             Instant end2 = Instant.now();
-            Log.d(TAG,"reading time= "+humanReadableFormat(Duration.between(start2, end2)));
+            Log.d(TAG,"reading time "+humanReadableFormat(Duration.between(start2, end2)));
             Log.d(TAG,"start parsing...");
             int i = 0;
             for (Row currentRow : sheet) {
@@ -146,7 +146,7 @@ public class XLSXParser {
         } catch (IOException e) {Log.e(TAG, "error while parsing xlsx file", e);}
 
         Instant end = Instant.now();
-        Log.d(TAG,"parsing time= "+humanReadableFormat(Duration.between(start, end)));
+        Log.d(TAG,"parsing time "+humanReadableFormat(Duration.between(start, end)));
         Log.d(TAG, String.format("found %d valid input.",result.size()));
 
         return result;
