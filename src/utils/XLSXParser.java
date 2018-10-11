@@ -42,21 +42,21 @@ public class XLSXParser {
 
                 dataBase.init(groups.get(0).get(0).get(0));
 
+                int i = 0;
                 for (List<List<ExcelDataRow>> animal: groups) {
                     //add animal
                     dataBase.addAnimal(animal.get(0).get(0));
                     for (List<ExcelDataRow> day: animal) {
                         //add day
                         dataBase.addDay(day.get(0));
-                        int i = 0;
                         for (ExcelDataRow entryRow: day) {
                             //add entry
                             dataBase.addEntry(entryRow, i);
-                            i++;
                             currEntryNumb++;
                             System.out.println(String.format("progress: %.0f/%.0f ", currEntryNumb, totalEntryNumb ));
                             if(i > 5) break;
                         }
+                        i++;
                     }
                 }
 
