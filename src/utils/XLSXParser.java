@@ -129,7 +129,7 @@ public class XLSXParser {
                     //System.out.print(df.formatCellValue(currentCell)+"   ");
                 }
                 //System.out.print(data.size()+"\n");
-                if(data.size() < 16) continue;
+                if(data.get(4).length() != 11) continue;
 
                 try{
                     result.add(new ExcelDataRow(data.get(0), data.get(1), Long.parseLong(data.get(2)), Integer.valueOf(data.get(3)),
