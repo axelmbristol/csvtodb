@@ -99,6 +99,26 @@ public class ExcelDataRow {
         this.correlationValue = correlationValue;
     }
 
+    public ExcelDataRow(String date, String time, Long controlStation,
+                        Long tagSerialNumber, String signalStrength,
+                        String batteryVoltage, Integer activityLevel
+
+    ) {
+        this.date = date;
+        this.time = time;
+        this.controlStation = controlStation;
+        this.type12TagMessages = null;
+        this.tagSerialNumber = tagSerialNumber;
+        this.signalStrength = signalStrength;
+        this.batteryVoltage = batteryVoltage;
+        this.firstAccelerometerCounter = null;
+        this.firstSensorValue = activityLevel;
+        this.secondAccelerometerCounter = null;
+        this.secondSensorValuesXYZ = null;
+        this.correlationIdentifier = null;
+        this.correlationValue = null;
+    }
+
     public String getDate() {
         return date;
     }

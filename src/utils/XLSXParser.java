@@ -9,16 +9,17 @@ import trikita.log.Log;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static utils.Utils.findAllFilesWithExt;
 import static utils.Utils.humanReadableFormat;
+import static utils.Utils.isNumeric;
 
 /**
  * Created by Axel on 26/09/2018.
@@ -29,6 +30,7 @@ public class XLSXParser {
     private static String TAG = XLSXParser.class.getName();
 
     private static double ENTRY_COUNT = 0.0;
+    private static int spreadSheetType = 0;
 
     public static void init(String dirPath, String dbName){
         Log.d(TAG,"init...");
@@ -104,6 +106,11 @@ public class XLSXParser {
         return sortedFinal;
     }
 
+    private static int getSpreadSheetDataType(String inputDate){
+        String year = inputDate.split(" ")[0].split("/")[2];
+        return ((Integer.valueOf(year) > 13)? 2:1);
+    }
+
     private static List<ExcelDataRow> parse(String filePath){
         Log.d(TAG, String.format("start parsing %s ...", filePath));
         List<ExcelDataRow> result = new ArrayList<>();
@@ -119,6 +126,9 @@ public class XLSXParser {
             Log.d(TAG,"reading time "+humanReadableFormat(Duration.between(start2, end2)));
             Log.d(TAG,"start parsing...");
             int i = 0;
+
+            spreadSheetType = getSpreadSheetDataType(df.formatCellValue(sheet.getRow(4).getCell(0)));
+
             for (Row currentRow : sheet) {
                 //Log.d(TAG,"reading...");
                 i++;
@@ -126,22 +136,34 @@ public class XLSXParser {
                 List<String> data = new ArrayList<>();
                 for (Cell currentCell : currentRow) {
                     data.add(df.formatCellValue(currentCell));
-                    //System.out.print(df.formatCellValue(currentCell)+"   ");
+                //  System.out.print(df.formatCellValue(currentCell)+"   ");
                 }
                 //System.out.print(data.size()+"\n");
-                if(data.get(4).length() != 11) continue;
 
-                try{
-                    result.add(new ExcelDataRow(data.get(0), data.get(1), Long.parseLong(data.get(2)), Integer.valueOf(data.get(3)),
-                            Long.valueOf(data.get(4)), data.get(5),
-                            data.get(6), data.get(7),
-                            Integer.valueOf(data.get(8)), data.get(9),
-                            data.get(10), data.get(11),
-                            Integer.valueOf(data.get(12))
-                    ));
-                }catch (NumberFormatException e){
-                    Log.e(TAG,"error while parsing data", e);
+                if(spreadSheetType == 1) {
+                    if(data.get(3).length() != 11 && isNumeric(data.get(6))) continue;
+                    try{
+                        result.add(new ExcelDataRow(data.get(0), data.get(1), Long.parseLong(data.get(2)), Long.valueOf(data.get(3)),
+                                data.get(4), data.get(5), Integer.valueOf(data.get(6))));
+                    }catch (NumberFormatException e){
+                        Log.e(TAG,"error while parsing data type="+spreadSheetType, e);
+                    }
                 }
+                if(spreadSheetType == 2){
+                        if(data.get(4).length() != 11 && isNumeric(data.get(8)) ) continue;
+                        try{
+                            result.add(new ExcelDataRow(data.get(0), data.get(1), Long.parseLong(data.get(2)), Integer.valueOf(data.get(3)),
+                                    Long.valueOf(data.get(4)), data.get(5),
+                                    data.get(6), data.get(7),
+                                    Integer.valueOf(data.get(8)), data.get(9),
+                                    data.get(10), data.get(11),
+                                    Integer.valueOf(data.get(12))
+                            ));
+                        }catch (NumberFormatException e){
+                            Log.e(TAG,"error while parsing data type="+spreadSheetType, e);
+                        }
+                }
+
             }
         } catch (IOException e) {Log.e(TAG, "error while parsing xlsx file", e);}
 
