@@ -3,6 +3,7 @@ package database;
 import com.mongodb.BasicDBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
+import com.mongodb.MongoWriteException;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
@@ -11,7 +12,9 @@ import entities.ExcelDataRow;
 import org.bson.Document;
 import trikita.log.Log;
 
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import static com.mongodb.client.model.Filters.eq;
@@ -43,6 +46,17 @@ public class DataBase {
         }
     }
 
+    private void initCopy(ExcelDataRow excelDataRow){
+        Document farmDocument = createFarmDocument(excelDataRow);
+        collectionName = collectionName + Instant.now().toEpochMilli();
+        if(!isCollectionExists(collectionName)){
+            Log.d(TAG,"creating new farm collection."+collectionName+" "+farmDocument);
+            database.getCollection(collectionName).insertOne(farmDocument);
+        }else {
+            Log.d(TAG,"collection already exists."+collectionName+" "+farmDocument);
+        }
+    }
+
     public void addAnimal(ExcelDataRow excelDataRow){
         addNewAnimal(excelDataRow, database.getCollection(collectionName));
     }
@@ -60,11 +74,22 @@ public class DataBase {
 //    }
 
     public void addEntry(ExcelDataRow ExcelDataRow){
-        BasicDBObject d = createTagDocument(ExcelDataRow);
-        database.getCollection(collectionName).updateOne(Filters.and(
-                eq("animals.serial_number", ExcelDataRow.getTagSerialNumber())
-                ),
-                Updates.push("animals.$.tagData", d));
+        try{
+            BasicDBObject d = createTagDocument(ExcelDataRow);
+            database.getCollection(collectionName).updateOne(Filters.and(
+                    eq("animals.serial_number", ExcelDataRow.getTagSerialNumber())
+                    ),
+                    Updates.push("animals.$.tagData", d));
+        }catch (MongoWriteException e){
+            Log.e(TAG,"error while trying to add entry.",e);
+            //todo create new document
+            initCopy(ExcelDataRow);
+            BasicDBObject d = createTagDocument(ExcelDataRow);
+            database.getCollection(collectionName).updateOne(Filters.and(
+                    eq("animals.serial_number", ExcelDataRow.getTagSerialNumber())
+                    ),
+                    Updates.push("animals.$.tagData", d));
+        }
     }
 
     private boolean isCollectionExists(String collectionName){
