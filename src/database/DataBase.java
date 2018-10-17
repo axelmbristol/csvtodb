@@ -14,7 +14,6 @@ import trikita.log.Log;
 
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import static com.mongodb.client.model.Filters.eq;
@@ -48,7 +47,7 @@ public class DataBase {
 
     private void initCopy(ExcelDataRow excelDataRow){
         Document farmDocument = createFarmDocument(excelDataRow);
-        collectionName = collectionName + Instant.now().toEpochMilli();
+        collectionName = collectionName +"-"+ Instant.now().toEpochMilli();
         if(!isCollectionExists(collectionName)){
             Log.d(TAG,"creating new farm collection."+collectionName+" "+farmDocument);
             database.getCollection(collectionName).insertOne(farmDocument);
