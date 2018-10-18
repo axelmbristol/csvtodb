@@ -3,8 +3,7 @@ package utils;
 import org.apache.commons.io.FileUtils;
 import trikita.log.Log;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -54,5 +53,20 @@ class Utils {
             return false;
         }
         return true;
+    }
+
+    public static void writeToLogFile(String input){
+        PrintWriter out = null;
+        try {
+            out = new PrintWriter(new BufferedWriter(new FileWriter("log.txt", true)));
+            out.println(input);
+        }catch (IOException e) {
+            System.err.println(e);
+        }finally{
+            if(out != null){
+                out.close();
+            }
+        }
+
     }
 }
