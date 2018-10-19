@@ -70,8 +70,10 @@ public class XLSXParser {
                         }
                     }
                     Instant endCurrFileProcessing = Instant.now();
-                    logs.add(String.format("%s to process file %s",
-                            humanReadableFormat(Duration.between(startCurrFileProcessing, endCurrFileProcessing)), path));
+                    String log = String.format("%s to process file %s",
+                            humanReadableFormat(Duration.between(startCurrFileProcessing, endCurrFileProcessing)), path);
+                    logs.add(log);
+                    writeToLogFile(log);
                 }
             }catch (OutOfMemoryError e){
                 Log.e(TAG,"error while processing file", e);
@@ -81,7 +83,6 @@ public class XLSXParser {
             System.out.println("**********Transfer to db finished**********");
             for (String log: logs) {
                 System.out.println(log);
-                writeToLogFile(log);
             }
 
             System.out.println("*******************************************");
