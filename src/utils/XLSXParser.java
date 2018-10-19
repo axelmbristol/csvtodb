@@ -72,7 +72,7 @@ public class XLSXParser {
                     Instant endCurrFileProcessing = Instant.now();
                     String log = String.format("%s to process file %s",
                             humanReadableFormat(Duration.between(startCurrFileProcessing, endCurrFileProcessing)), path);
-                    logs.add(log);
+                     logs.add(log);
                     writeToLogFile(log);
                 }
             }catch (OutOfMemoryError e){

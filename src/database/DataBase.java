@@ -78,7 +78,7 @@ public class DataBase {
             database.getCollection(collectionName).updateOne(Filters.and(
                     eq("animals.serial_number", ExcelDataRow.getTagSerialNumber())
                     ),
-                    Updates.push("animals.$.tagData", d));
+                    Updates.push("animals.$.tag_data", d));
         }catch (MongoWriteException e){
             Log.e(TAG,"error while trying to add entry.",e);
             //todo create new document
@@ -87,7 +87,7 @@ public class DataBase {
             database.getCollection(collectionName).updateOne(Filters.and(
                     eq("animals.serial_number", ExcelDataRow.getTagSerialNumber())
                     ),
-                    Updates.push("animals.$.tagData", d));
+                    Updates.push("animals.$.tag_data", d));
         }
     }
 
@@ -221,7 +221,7 @@ public class DataBase {
         //days.add(createDayDocument(ExcelDataRow));
         return new BasicDBObject("_id", ExcelDataRow.getTagSerialNumber())
                 .append("serial_number", ExcelDataRow.getTagSerialNumber())
-                .append("tagData", tags);
+                .append("tag_data", tags);
     }
 
 //    private BasicDBObject createDayDocument(ExcelDataRow ExcelDataRow){
