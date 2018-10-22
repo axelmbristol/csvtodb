@@ -111,6 +111,7 @@ public class DataBase {
                 Document doc = new Document("control_station", row.getControlStation())
                         .append("animals", split.get(i));
                 collectionName = "_"+row.getControlStation()+"-"+row.getDate().split(" ")[0]+"-"+i;
+                Log.d(TAG,"splitting collection new collection="+collectionName);
                 database.getCollection(collectionName).insertOne(doc);
             }
         }
