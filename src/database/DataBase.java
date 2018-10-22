@@ -10,6 +10,7 @@ import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Updates;
 import entities.ExcelDataRow;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import trikita.log.Log;
 
 import java.time.Instant;
@@ -25,6 +26,7 @@ public class DataBase {
     private static String TAG = DataBase.class.getName();
     private MongoDatabase database;
     private String collectionName;
+    private MongoCollection currCollection;
 
     public DataBase(String dataBaseName){
         Log.d(TAG, "mongodb init...");
@@ -37,6 +39,7 @@ public class DataBase {
     public void init(ExcelDataRow excelDataRow){
         Document farmDocument = createFarmDocument(excelDataRow);
         collectionName = "_"+farmDocument.get("control_station")+"-"+excelDataRow.getDate().split(" ")[0]; //need _ for MongoDB collection syntax convention.
+        currCollection = database.getCollection(collectionName);
         if(!isCollectionExists(collectionName)){
             Log.d(TAG,"creating new farm collection."+collectionName+" "+farmDocument);
             database.getCollection(collectionName).insertOne(farmDocument);
@@ -48,6 +51,7 @@ public class DataBase {
     private void initCopy(ExcelDataRow excelDataRow){
         Document farmDocument = createFarmDocument(excelDataRow);
         collectionName = collectionName +"-"+ Instant.now().toEpochMilli();
+        currCollection = database.getCollection(collectionName);
         if(!isCollectionExists(collectionName)){
             Log.d(TAG,"creating new farm collection."+collectionName+" "+farmDocument);
             database.getCollection(collectionName).insertOne(farmDocument);
@@ -72,10 +76,25 @@ public class DataBase {
 //                Updates.addToSet("animals.$.days", d));
 //    }
 
+    public void addEntries(List<ExcelDataRow> excelDataRows){
+        List<BasicDBObject> documents = new ArrayList<>();
+        Bson filter = null;
+
+        for(ExcelDataRow excelDataRow : excelDataRows){
+            documents.add(createTagDocument(excelDataRow));
+
+            filter = Filters.and(
+                    eq("animals.serial_number", excelDataRow.getTagSerialNumber())
+            );
+        }
+        currCollection.updateMany()
+
+    }
+
     public void addEntry(ExcelDataRow ExcelDataRow){
         try{
             BasicDBObject d = createTagDocument(ExcelDataRow);
-            database.getCollection(collectionName).updateOne(Filters.and(
+            currCollection.updateOne(Filters.and(
                     eq("animals.serial_number", ExcelDataRow.getTagSerialNumber())
                     ),
                     Updates.push("animals.$.tag_data", d));
