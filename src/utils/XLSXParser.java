@@ -40,20 +40,17 @@ public class XLSXParser {
             Log.d(TAG,"new db created dbName="+dbName);
 
             try {
+                double currFileEntry = 0;
+                Instant startEntryProcessing = Instant.now(); Instant endEntryProcessing;
                 for (String path: files) {
                     Instant startCurrFileProcessing = Instant.now();
-                    double currFileEntry = 0;
                     List<ExcelDataRow> entries = parse(path);
                     List<List<List<ExcelDataRow>>> groups = groupEntries(entries);
-                    double currFileTotalEntries = entries.size();
-
-                    Instant startEntryProcessing = Instant.now(); Instant endEntryProcessing;
 
                     for(List<List<ExcelDataRow>> day : groups){
-                        dataBase.init(day.get(0).get(0));//create new collection for the day
-                        double cptEntries = 0;
-                        ENTRY_COUNT = currFileTotalEntries; //change this value to choose how many entries per days should be kept
-                        for (List<ExcelDataRow> animal : day){
+                        //dataBase.init(day.get(0).get(0));//create new collection for the day
+                        dataBase.addEntry(day);
+                        /*for (List<ExcelDataRow> animal : day){
                             dataBase.addAnimal(animal.get(0));
                             for (ExcelDataRow entryRow : animal){
                                 dataBase.addEntry(entryRow);
@@ -67,8 +64,14 @@ public class XLSXParser {
                                     break;
                                 }
                             }
-                        }
+                        }*/
                     }
+                    currFileEntry++;
+                    endEntryProcessing = Instant.now();
+                    System.out.println(String.format("progress: %.0f/%.0f  %d%%  %s", currFileEntry, (float)files.size(),
+                            (int)((currFileEntry/files.size())*100.0), humanReadableFormat(Duration.between(startEntryProcessing, endEntryProcessing))));
+
+
                     Instant endCurrFileProcessing = Instant.now();
                     String log = String.format("%s to process file %s",
                             humanReadableFormat(Duration.between(startCurrFileProcessing, endCurrFileProcessing)), path);
@@ -158,7 +161,9 @@ public class XLSXParser {
                         result.add(new ExcelDataRow(data.get(0), data.get(1), Long.parseLong(data.get(2)), Long.valueOf(data.get(3)),
                                 data.get(4), data.get(5), Integer.valueOf(data.get(6))));
                     }catch (NumberFormatException e){
-                        Log.e(TAG,"error while parsing data type="+spreadSheetType, e);
+                        Log.e(TAG,"error while parsing data type="+spreadSheetType+" data="+data, e);
+                        writeToLogFile("error while parsing data type="+spreadSheetType+" data="+data+" e="+e.getMessage()+" filepath="+filePath);
+                        break;
                     }
                 }
                 if(spreadSheetType == 2){
@@ -172,12 +177,18 @@ public class XLSXParser {
                                     Integer.valueOf(data.get(12))
                             ));
                         }catch (NumberFormatException e){
-                            Log.e(TAG,"error while parsing data type="+spreadSheetType, e);
+                            Log.e(TAG,"error while parsing data type="+spreadSheetType+" data="+data, e);
+                            writeToLogFile("file="+filePath);
+                            writeToLogFile("error while parsing data type="+spreadSheetType+" data="+data+" e="+e.getMessage()+" filepath="+filePath);
+                            break;
                         }
                 }
 
             }
-        } catch (IOException e) {Log.e(TAG, "error while parsing xlsx file", e);}
+        } catch (IOException e) {
+            Log.e(TAG, "error while parsing xlsx file", e);
+            writeToLogFile("error while parsing data type="+spreadSheetType+" e="+e.getMessage()+" filepath="+filePath);
+        }
 
         Instant end = Instant.now();
         Log.d(TAG,"parsing time "+humanReadableFormat(Duration.between(start, end)));

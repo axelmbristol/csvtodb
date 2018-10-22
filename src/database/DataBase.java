@@ -1,5 +1,6 @@
 package database;
 
+import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
@@ -9,15 +10,18 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Updates;
 import entities.ExcelDataRow;
+import org.bson.BsonMaximumSizeExceededException;
 import org.bson.Document;
-import org.bson.conversions.Bson;
 import trikita.log.Log;
+import utils.Utils;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
 import static com.mongodb.client.model.Filters.eq;
+
+
 /**
  * Created by Axel on 26/09/2018.
  * class for database init and communication
@@ -76,19 +80,40 @@ public class DataBase {
 //                Updates.addToSet("animals.$.days", d));
 //    }
 
-    public void addEntries(List<ExcelDataRow> excelDataRows){
-        List<BasicDBObject> documents = new ArrayList<>();
-        Bson filter = null;
+    public void addEntry(List<List<ExcelDataRow>> day){
 
-        for(ExcelDataRow excelDataRow : excelDataRows){
-            documents.add(createTagDocument(excelDataRow));
-
-            filter = Filters.and(
-                    eq("animals.serial_number", excelDataRow.getTagSerialNumber())
-            );
+        List<BasicDBObject> animals = new ArrayList<>();
+        for (List<ExcelDataRow> animal : day){
+            List<BasicDBObject> tags = new ArrayList<>();
+            for (ExcelDataRow entryRow : animal){
+                tags.add(createTagDocument(entryRow));
+            }
+            animals.add(new BasicDBObject("_id", animal.get(0).getTagSerialNumber())
+                            .append("serial_number", animal.get(0).getTagSerialNumber())
+                            .append("tag_data", tags));
         }
-        currCollection.updateMany()
 
+        ExcelDataRow row = day.get(0).get(0);
+        collectionName = "_"+row.getControlStation()+"-"+row.getDate().split(" ")[0];
+
+        Document farmDocument = new Document("control_station", row.getControlStation())
+                .append("animals", animals);
+
+        try{
+            //need _ for MongoDB collection syntax convention.
+            database.getCollection(collectionName).insertOne(farmDocument);
+        }catch (BsonMaximumSizeExceededException e){
+            Log.e(TAG,"error while trying to add entry.",e);
+            Utils.writeToLogFile("error while trying to add entry. e="+e);
+
+            List<List<BasicDBObject>> split = Lists.partition(animals, animals.size()/2);
+            for (int i = 0; i < split.size(); i++){
+                Document doc = new Document("control_station", row.getControlStation())
+                        .append("animals", split.get(i));
+                collectionName = "_"+row.getControlStation()+"-"+row.getDate().split(" ")[0]+"-"+i;
+                database.getCollection(collectionName).insertOne(doc);
+            }
+        }
     }
 
     public void addEntry(ExcelDataRow ExcelDataRow){
@@ -115,117 +140,6 @@ public class DataBase {
         Log.d(TAG,"collections="+collections);
         return collections.contains(collectionName);
     }
-//
-//    private boolean isAnimalExists(MongoCollection<Document> collection, Long serialNumber){
-//        Instant start = Instant.now();
-//        boolean result = getAnimal(collection, serialNumber).has("serial_number");
-//        Instant end = Instant.now();
-//        isAnimalExistsTime = humanReadableFormat(Duration.between(start, end));
-//        return result;
-//    }
-
-//    private boolean isDayExists(MongoCollection<Document> collection, Long serialNumber, String day, String time){
-//
-//        boolean dayExist = false;
-//        //dataExist = false;
-//        getAnimalDays(collection, serialNumber);
-//        for (int i = days.size() - 1; i >= 0; i--) {
-//            if (((JsonObject) days.get(i)).get("date").getAsString().equals(day)) {
-//                dayExist = true;
-////                JsonArray tagData = ((JsonObject) days.get(i)).getAsJsonArray("tagData");
-////                if (((JsonObject) tagData.get(0)).get("time").getAsString().equals(time)) {
-////                    //dataExist = true;
-////                    cpt2 = i;
-////                    break;
-////                }
-//                cpt2 = i;
-//                break;
-//            }
-//        }
-//        //Log.d(TAG,"dayExist ? "+dayExist);
-//        return dayExist;
-//    }
-
-//    private JsonArray getAnimalDays(MongoCollection<Document> collection, Long serialNumber){
-//        Instant start = Instant.now();
-//        days = getAnimal(collection, serialNumber).getAsJsonArray("days");
-//        Instant end = Instant.now();
-//        getAnimalDaysTime = humanReadableFormat(Duration.between(start, end));
-//        return days;
-//    }
-
-//    private JsonObject getAnimal(MongoCollection<Document> collection, Long serialNumber){
-//        Instant start = Instant.now();
-//        JsonObject result = new JsonObject();
-//        JsonArray animals = getAnimalsArray(collection);
-//        cpt3 = 0;
-//        for(JsonElement animal : animals){
-//            cpt3++;
-//            JsonElement json = ((JsonObject) animal).get("serial_number");
-//            Long sn = ((JsonObject) json).get("$numberLong").getAsLong();
-//            if (!sn.equals(serialNumber)) continue;
-//            result = (JsonObject)animal;
-//            break;
-//        }
-//        Instant end = Instant.now();
-//        getAnimalTime = humanReadableFormat(Duration.between(start, end));
-//
-//        //Log.d(TAG,"getAnimal result="+result+" size="+result.size());
-//        return result;
-//    }
-//
-//    private JsonArray getAnimalsArray(MongoCollection<Document> collection){
-//        Instant start = Instant.now();
-//        String json = Objects.requireNonNull(collection.find().first()).toJson();
-//        jsonSize = json.length();
-//        Instant end = Instant.now();
-//        getAnimalsArrayTime = humanReadableFormat(Duration.between(start, end));
-//
-//        start = Instant.now();
-//        JsonArray animals = parser.parse(json).getAsJsonObject().getAsJsonArray("animals");
-//        end = Instant.now();
-//        jsonParseTime = humanReadableFormat(Duration.between(start, end));
-//
-//        return animals;
-//    }
-    //    private void updateAnimal(ExcelDataRow ExcelDataRow, MongoCollection<Document> collection){
-//        //Log.d(TAG, "updateAnimal...");
-//        if(isDayExists(collection, ExcelDataRow.getTagSerialNumber(), ExcelDataRow.getDate(), ExcelDataRow.getTime())){
-//            //Log.d(TAG, "day exist adding new data...");
-//            //if(!dataExist){
-//                Integer index = getItemIndex(collection, ExcelDataRow.getTagSerialNumber(), ExcelDataRow.getDate());
-//                if(index != null){
-//                    collection.updateOne(Filters.and(
-//                            eq("animals.serial_number", ExcelDataRow.getTagSerialNumber())
-//                            ),
-//                            Updates.push("animals.$.days."+index+".tagData", createTagDocument(ExcelDataRow)));
-//                }
-////            }else{
-////                Log.d(TAG, "data exists.");
-////            }
-//        }else{
-//            //Log.d(TAG, "day does not exist adding new day...");
-//            collection.updateOne(eq("animals.serial_number", ExcelDataRow.getTagSerialNumber()),
-//                    Updates.addToSet("animals.$.days", createDayDocument(ExcelDataRow)));
-//        }
-//    }
-//
-//    private Integer getItemIndex(MongoCollection<Document> collection, Long serialNumber, String date){
-//        Instant start = Instant.now();
-//        Integer index = null;
-//        //days = getAnimalDays(collection, serialNumber);
-//        for (int i = days.size() - 1; i >= 0; i--) {
-//            if (((JsonObject) days.get(i)).get("date").getAsString().equals(date)) {
-//                index = i;
-//                cpt1 = i;
-//                break;
-//            }
-//        }
-//        Instant end = Instant.now();
-//        getItemIndexTime = humanReadableFormat(Duration.between(start, end));
-//        //Log.d(TAG,"index="+index+" for date="+date+" serial_number="+serialNumber);
-//        return index;
-//    }
 
     private Document createFarmDocument(ExcelDataRow ExcelDataRow){
         List<BasicDBObject> animals = new ArrayList<>();
@@ -242,14 +156,6 @@ public class DataBase {
                 .append("serial_number", ExcelDataRow.getTagSerialNumber())
                 .append("tag_data", tags);
     }
-
-//    private BasicDBObject createDayDocument(ExcelDataRow ExcelDataRow){
-//        List<BasicDBObject> tags = new ArrayList<>();
-//        //tags.add(createTagDocument(ExcelDataRow));
-//        return new BasicDBObject("_id", ExcelDataRow.getDate())
-//                .append("date", ExcelDataRow.getDate())
-//                .append("tagData", tags);
-//    }
 
     private BasicDBObject createTagDocument(ExcelDataRow ExcelDataRow){
         return new BasicDBObject("_id", ExcelDataRow.getTime())

@@ -12,7 +12,7 @@ import java.util.List;
  * Created by Axel on 05/10/2018.
  * Utils class
  */
-class Utils {
+public class Utils {
 
     private static String TAG = Utils.class.getName();
 
