@@ -155,8 +155,10 @@ public class XLSXParser {
                 }
                 //System.out.print(data.size()+"\n");
 
+                if(data.size() < 4) continue;
+
                 if(spreadSheetType == 1) {
-                    if(data.size() < 3 && data.get(3).length() != 11 && isNumeric(data.get(6))) continue;
+                    if(data.get(3).length() != 11 && isNumeric(data.get(6))) continue;
                     try{
                         result.add(new ExcelDataRow(data.get(0), data.get(1), Long.parseLong(data.get(2)), Long.valueOf(data.get(3)),
                                 data.get(4), data.get(5), Integer.valueOf(data.get(6))));
@@ -167,7 +169,7 @@ public class XLSXParser {
                     }
                 }
                 if(spreadSheetType == 2){
-                        if(data.size() < 4 && data.get(4).length() != 11 && isNumeric(data.get(8)) ) continue;
+                        if(data.get(4).length() != 11 && isNumeric(data.get(8)) ) continue;
                         try{
                             result.add(new ExcelDataRow(data.get(0), data.get(1), Long.parseLong(data.get(2)), Integer.valueOf(data.get(3)),
                                     Long.valueOf(data.get(4)), data.get(5),
@@ -185,7 +187,7 @@ public class XLSXParser {
                 }
 
             }
-        } catch (IOException e) {
+        } catch (NullPointerException | IOException e) {
             Log.e(TAG, "error while parsing xlsx file", e);
             writeToLogFile("error while parsing data type="+spreadSheetType+" e="+e.getMessage()+" filepath="+filePath);
         }
