@@ -31,13 +31,22 @@ public class DataBase {
     private MongoDatabase database;
     private String collectionName;
     private MongoCollection currCollection;
+    private MongoClient mongoClient;
 
-    public DataBase(String dataBaseName){
+    public DataBase(){
         Log.d(TAG, "mongodb init...");
-        MongoClient mongoClient = new MongoClient(new MongoClientURI("mongodb://localhost:27017"));
+        mongoClient = new MongoClient(new MongoClientURI("mongodb://localhost:27017"));
         Log.d(TAG, "purge...");
-        mongoClient.getDatabase(dataBaseName).drop();
-        database = mongoClient.getDatabase(dataBaseName);
+
+        List<String> databases = mongoClient.listDatabaseNames().into(new ArrayList<>());
+        Log.d(TAG,"databases="+databases);
+
+        for(String db : databases){
+            if(db.length() > "_70091100060".length()) {
+                Log.d(TAG, "drop db="+db);
+                mongoClient.getDatabase(db).drop();
+            }
+        }
     }
 
     public void init(ExcelDataRow excelDataRow){
@@ -80,7 +89,15 @@ public class DataBase {
 //                Updates.addToSet("animals.$.days", d));
 //    }
 
-    public void addEntry(List<List<ExcelDataRow>> day){
+    public void purgeDB(String dataBaseName){
+        if(isDataBaseExists(dataBaseName)){
+            mongoClient.getDatabase(dataBaseName).drop();
+        }
+    }
+
+    public void addEntry(List<List<ExcelDataRow>> day, String dataBaseName){
+
+        database = mongoClient.getDatabase(dataBaseName);
 
         List<BasicDBObject> animals = new ArrayList<>();
         for (List<ExcelDataRow> animal : day){
@@ -106,7 +123,7 @@ public class DataBase {
             Log.e(TAG,"error while trying to add entry.",e);
             Utils.writeToLogFile("error while trying to add entry. e="+e);
 
-            List<List<BasicDBObject>> split = Lists.partition(animals, animals.size()/2);
+            List<List<BasicDBObject>> split = Lists.partition(animals, (animals.size()/2)+1);
             for (int i = 0; i < split.size(); i++){
                 Document doc = new Document("control_station", row.getControlStation())
                         .append("animals", split.get(i));
@@ -140,6 +157,12 @@ public class DataBase {
         List<String> collections = database.listCollectionNames().into(new ArrayList<>());
         Log.d(TAG,"collections="+collections);
         return collections.contains(collectionName);
+    }
+
+    private boolean isDataBaseExists(String databaseName){
+        List<String> databases = mongoClient.listDatabaseNames().into(new ArrayList<>());
+        Log.d(TAG,"databases="+databases);
+        return databases.contains(databaseName);
     }
 
     private Document createFarmDocument(ExcelDataRow ExcelDataRow){

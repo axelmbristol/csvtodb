@@ -36,8 +36,8 @@ public class XLSXParser {
         List<String> logs = new ArrayList<>();
 
         if(files.size() > 0){
-            DataBase dataBase = new DataBase(dbName);
-            Log.d(TAG,"new db created dbName="+dbName);
+            DataBase dataBase = new DataBase();
+            //Log.d(TAG,"new db created dbName="+dbName);
 
             try {
                 double currFileEntry = 0;
@@ -48,23 +48,7 @@ public class XLSXParser {
                     List<List<List<ExcelDataRow>>> groups = groupEntries(entries);
 
                     for(List<List<ExcelDataRow>> day : groups){
-                        //dataBase.init(day.get(0).get(0));//create new collection for the day
-                        dataBase.addEntry(day);
-                        /*for (List<ExcelDataRow> animal : day){
-                            dataBase.addAnimal(animal.get(0));
-                            for (ExcelDataRow entryRow : animal){
-                                dataBase.addEntry(entryRow);
-                                cptEntries++;
-                                currFileEntry++;
-                                endEntryProcessing = Instant.now();
-                                System.out.println(String.format("progress: %.0f/%.0f  %d%%  %s", currFileEntry, currFileTotalEntries,
-                                        (int)((currFileEntry/currFileTotalEntries)*100.0), humanReadableFormat(Duration.between(startEntryProcessing, endEntryProcessing))));
-                                if(cptEntries > ENTRY_COUNT - 1){
-                                    cptEntries = 0;
-                                    break;
-                                }
-                            }
-                        }*/
+                        dataBase.addEntry(day, day.get(0).get(0).getControlStation().toString());
                     }
                     currFileEntry++;
                     endEntryProcessing = Instant.now();
@@ -187,7 +171,7 @@ public class XLSXParser {
                 }
 
             }
-        } catch (NullPointerException | IOException e) {
+        } catch (NullPointerException | IndexOutOfBoundsException| IOException e) {
             Log.e(TAG, "error while parsing xlsx file", e);
             writeToLogFile("error while parsing data type="+spreadSheetType+" e="+e.getMessage()+" filepath="+filePath);
         }
