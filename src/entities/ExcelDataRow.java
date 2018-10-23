@@ -4,12 +4,18 @@ import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import com.mongodb.BasicDBObject;
 import org.bson.Document;
+import org.jetbrains.annotations.NotNull;
+import sun.rmi.runtime.Log;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * Created by Axel on 26/09/2018.
  * class rfid tag
  */
-public class ExcelDataRow {
+public class ExcelDataRow implements Comparable<ExcelDataRow>{
 
     @SerializedName("date")
     @Expose
@@ -193,4 +199,19 @@ public class ExcelDataRow {
 
 
 
+
+    @Override
+    public int compareTo(@NotNull ExcelDataRow o) {
+        SimpleDateFormat format = new SimpleDateFormat("mm/dd/yy");
+        Date date1 = new Date();
+        Date date2 = new Date();
+        try {
+            date1 = format.parse(o.getDate());
+            date2 = format.parse(getDate());
+        } catch (ParseException e) {
+            System.out.println("error while parsing date e="+e);
+        }
+
+        return date1.compareTo(date2);
+    }
 }

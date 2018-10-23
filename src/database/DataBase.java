@@ -36,13 +36,11 @@ public class DataBase {
     public DataBase(){
         Log.d(TAG, "mongodb init...");
         mongoClient = new MongoClient(new MongoClientURI("mongodb://localhost:27017"));
-        Log.d(TAG, "purge...");
-
         List<String> databases = mongoClient.listDatabaseNames().into(new ArrayList<>());
         Log.d(TAG,"databases="+databases);
-
+        Log.d(TAG, "purge...");
         for(String db : databases){
-            if(db.length() > "_70091100060".length()) {
+            if(db.length() >= "70091100060".length()) {
                 Log.d(TAG, "drop db="+db);
                 mongoClient.getDatabase(db).drop();
             }

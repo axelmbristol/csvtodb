@@ -9,11 +9,10 @@ import trikita.log.Log;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.text.DateFormat;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static utils.Utils.*;
@@ -87,6 +86,7 @@ public class XLSXParser {
                 .entrySet().stream()
                 .map(e -> { List<ExcelDataRow> c = new ArrayList<>(); c.addAll(e.getValue()); return c; })
                 .collect(Collectors.toList());
+        //groupedByDate.sort(Comparator.comparing(e -> e.get(0).getDate()));
 
         for (List<ExcelDataRow> row: groupedByDate) {
             List<List<ExcelDataRow>> groupedBySerialNumber = row.stream()
@@ -94,7 +94,7 @@ public class XLSXParser {
                     .entrySet().stream()
                     .map(e -> { List<ExcelDataRow> c = new ArrayList<>(); c.addAll(e.getValue()); return c; })
                     .collect(Collectors.toList());
-            groupedBySerialNumber.sort(Comparator.comparing(e -> e.get(0).getDate()));
+            groupedBySerialNumber.sort(Comparator.comparing(e -> new Date(e.get(0).getDate())));
             sortedFinal.add(groupedBySerialNumber);
         }
 
