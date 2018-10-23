@@ -61,8 +61,10 @@ public class XLSXParser {
                     Instant endCurrFileProcessing = Instant.now();
                     String log = String.format("%s to process file %s",
                             humanReadableFormat(Duration.between(startCurrFileProcessing, endCurrFileProcessing)), path);
-                     logs.add(log);
+                    logs.add(log);
                     writeToLogFile(log);
+                    entries.clear();
+                    groups.clear();
                 }
             }catch (OutOfMemoryError e){
                 Log.e(TAG,"error while processing file", e);
@@ -118,8 +120,12 @@ public class XLSXParser {
     }
 
     private static int getSpreadSheetDataType(String inputDate){
-        String year = inputDate.split(" ")[0].split("/")[2];
-        return ((Integer.valueOf(year) > 13)? 2:1);
+        try {
+            String year = inputDate.split(" ")[0].split("/")[2];
+            return ((Integer.valueOf(year) > 13)? 2:1);
+        }catch (ArrayIndexOutOfBoundsException e){
+            return 1;
+        }
     }
 
     private static List<ExcelDataRow> parse(String filePath){
@@ -141,6 +147,7 @@ public class XLSXParser {
             int i = 0;
 
             spreadSheetType = getSpreadSheetDataType(df.formatCellValue(sheet.getRow(4).getCell(0)));
+
             Log.d(TAG,"start parsing...");
             for (Row currentRow : sheet) {
                 //Log.d(TAG,"reading...");
@@ -149,47 +156,68 @@ public class XLSXParser {
                 List<String> data = new ArrayList<>();
                 for (Cell currentCell : currentRow) {
                     data.add(df.formatCellValue(currentCell));
-                //  System.out.print(df.formatCellValue(currentCell)+"   ");
+                    //  System.out.print(df.formatCellValue(currentCell)+"   ");
                 }
                 //System.out.print(data.size()+"\n");
 
-                if(data.size() < 4) continue;
+                if(data.size() < 4 ) continue;
 
                 String date = data.get(0);
                 DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
-                Date startDate = dateFormat.parse(date);
+                Date startDate;
+                try {
+                    startDate = dateFormat.parse(date);
+                } catch (ParseException e) {
+                    Log.e(TAG,"invalid date", e);
+                    continue;
+                }
 
                 if(spreadSheetType == 1) {
-                    if(data.get(3).length() != 11 && isNumeric(data.get(6))) continue;
-                    try{
-                        result.add(new ExcelDataRow(prettyDate(startDate), data.get(1), Long.parseLong(data.get(2)), Long.valueOf(data.get(3)),
-                                data.get(4), data.get(5), Integer.valueOf(data.get(6))));
-                    }catch (NumberFormatException e){
-                        Log.e(TAG,"error while parsing data type="+spreadSheetType+" data="+data, e);
-                        writeToLogFile("error while parsing data type="+spreadSheetType+" data="+data+" e="+e.getMessage()+" filepath="+filePath);
-                        break;
+
+                    if(data.size() == 5){
+                        //Log.d(TAG,"add data to result");
+                        try{
+                            result.add(new ExcelDataRow(prettyDate(startDate), data.get(1), Long.parseLong(data.get(2)), Long.valueOf(data.get(3)),
+                                    null, null, Integer.valueOf(data.get(4))));
+                        }catch (NumberFormatException | IndexOutOfBoundsException e){
+                            Log.e(TAG,"error while parsing data type="+spreadSheetType+" data="+data, e);
+                            //writeToLogFile("error while parsing data type="+spreadSheetType+" data="+data+" e="+e.getMessage()+" filepath="+filePath);
+                            continue;
+                        }
+                    }else {
+                        if(data.get(3).length() != 11 && isNumeric(data.get(6))) continue;
+                        try{
+                            result.add(new ExcelDataRow(prettyDate(startDate), data.get(1), Long.parseLong(data.get(2)), Long.valueOf(data.get(3)),
+                                    data.get(4), data.get(5), Integer.valueOf(data.get(6))));
+                        }catch (NumberFormatException | IndexOutOfBoundsException e){
+                            Log.e(TAG,"error while parsing data type="+spreadSheetType+" data="+data, e);
+                            writeToLogFile("error while parsing data type="+spreadSheetType+" data="+data+" e="+e.getMessage()+" filepath="+filePath);
+                            continue;
+                        }
                     }
+
+
                 }
                 if(spreadSheetType == 2){
-                        if(data.get(4).length() != 11 && isNumeric(data.get(8)) ) continue;
-                        try{
-                            result.add(new ExcelDataRow(prettyDate(startDate), data.get(1), Long.parseLong(data.get(2)), Integer.valueOf(data.get(3)),
-                                    Long.valueOf(data.get(4)), data.get(5),
-                                    data.get(6), data.get(7),
-                                    Integer.valueOf(data.get(8)), data.get(9),
-                                    data.get(10), data.get(11),
-                                    Integer.valueOf(data.get(12))
-                            ));
-                        }catch (NumberFormatException e){
-                            Log.e(TAG,"error while parsing data type="+spreadSheetType+" data="+data, e);
-                            writeToLogFile("file="+filePath);
-                            writeToLogFile("error while parsing data type="+spreadSheetType+" data="+data+" e="+e.getMessage()+" filepath="+filePath);
-                            break;
-                        }
+                    if(data.get(4).length() != 11 && isNumeric(data.get(8)) ) continue;
+                    try{
+                        result.add(new ExcelDataRow(prettyDate(startDate), data.get(1), Long.parseLong(data.get(2)), Integer.valueOf(data.get(3)),
+                                Long.valueOf(data.get(4)), data.get(5),
+                                data.get(6), data.get(7),
+                                Integer.valueOf(data.get(8)), data.get(9),
+                                data.get(10), data.get(11),
+                                Integer.valueOf(data.get(12))
+                        ));
+                    }catch (NumberFormatException | IndexOutOfBoundsException e){
+                        Log.e(TAG,"error while parsing data type="+spreadSheetType+" data="+data, e);
+                        writeToLogFile("file="+filePath);
+                        writeToLogFile("error while parsing data type="+spreadSheetType+" data="+data+" e="+e.getMessage()+" filepath="+filePath);
+                        continue;
+                    }
                 }
 
             }
-        } catch (NullPointerException | IndexOutOfBoundsException | ParseException | IOException e) {
+        } catch (NullPointerException  | IndexOutOfBoundsException | IOException e) {
             Log.e(TAG, "error while parsing xlsx file", e);
             writeToLogFile("error while parsing data type="+spreadSheetType+" e="+e.getMessage()+" filepath="+filePath);
         }
