@@ -2,20 +2,15 @@ package entities;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
-import com.mongodb.BasicDBObject;
-import org.bson.Document;
 import org.jetbrains.annotations.NotNull;
-import sun.rmi.runtime.Log;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
  * Created by Axel on 26/09/2018.
  * class rfid tag
  */
-public class ExcelDataRow implements Comparable<ExcelDataRow>{
+public class ExcelDataRow {
 
     @SerializedName("date")
     @Expose
@@ -66,21 +61,6 @@ public class ExcelDataRow implements Comparable<ExcelDataRow>{
     @Expose
     private Double fIELD16;
 
-    public ExcelDataRow(Document d) {
-        this.date = d.getString("date");
-        this.time = d.getString("time");
-        this.controlStation = d.getLong("control_station");
-        this.type12TagMessages = d.getInteger("type_12_tag_messages");
-        this.tagSerialNumber = d.getLong("tag_serial_number");
-        this.signalStrength = d.getString("signal_strength");
-        this.batteryVoltage = d.getString("battery_voltage");
-        this.firstAccelerometerCounter = d.getString("first_accelerometer_counter");
-        this.firstSensorValue = d.getInteger("first_sensor_value");
-        this.secondAccelerometerCounter = d.getString("second_accelerometer_counter");
-        this.secondSensorValuesXYZ = d.getString("second_sensor_values_xyz");
-        this.correlationIdentifier = d.getString("correlation_identifier");
-        this.correlationValue = d.getInteger("correlation_value");
-    }
 
     public ExcelDataRow(String date, String time, Long controlStation, Integer type12TagMessages,
                         Long tagSerialNumber, String signalStrength,
@@ -197,21 +177,4 @@ public class ExcelDataRow implements Comparable<ExcelDataRow>{
 //                this.date, this.time, this.controlStation);
     }
 
-
-
-
-    @Override
-    public int compareTo(@NotNull ExcelDataRow o) {
-        SimpleDateFormat format = new SimpleDateFormat("mm/dd/yy");
-        Date date1 = new Date();
-        Date date2 = new Date();
-        try {
-            date1 = format.parse(o.getDate());
-            date2 = format.parse(getDate());
-        } catch (ParseException e) {
-            System.out.println("error while parsing date e="+e);
-        }
-
-        return date1.compareTo(date2);
-    }
 }

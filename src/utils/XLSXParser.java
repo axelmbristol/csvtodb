@@ -1,6 +1,7 @@
 package utils;
 
 import database.DataBase;
+import entities.Day;
 import entities.ExcelDataRow;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -10,6 +11,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
@@ -44,10 +47,10 @@ public class XLSXParser {
                 for (String path: files) {
                     Instant startCurrFileProcessing = Instant.now();
                     List<ExcelDataRow> entries = parse(path);
-                    List<List<List<ExcelDataRow>>> groups = groupEntries(entries);
+                    List<Day> groups = groupEntries(entries);
 
-                    for(List<List<ExcelDataRow>> day : groups){
-                        dataBase.addEntry(day, day.get(0).get(0).getControlStation().toString());
+                    for(Day day : groups){
+                        dataBase.addEntry(day, day.data.get(0).get(0).getControlStation().toString());
                     }
                     currFileEntry++;
                     endEntryProcessing = Instant.now();
@@ -77,26 +80,37 @@ public class XLSXParser {
         }
     }
 
-    private static List<List<List<ExcelDataRow>>> groupEntries(List<ExcelDataRow> entries){
-        List<List<List<ExcelDataRow>>> sortedFinal = new ArrayList<>();
+    private static List<Day> groupEntries(List<ExcelDataRow> entries){
+        List<Day> sortedFinal = new ArrayList<>();
         Instant start = Instant.now();
+        entries.sort(Comparator.comparing(ExcelDataRow::getDate));
+
         entries.sort(Comparator.comparing(ExcelDataRow::getTagSerialNumber));
         List<List<ExcelDataRow>> groupedByDate = entries.stream()
                 .collect(Collectors.groupingBy(ExcelDataRow::getDate))
                 .entrySet().stream()
-                .map(e -> { List<ExcelDataRow> c = new ArrayList<>(); c.addAll(e.getValue()); return c; })
+                .map(e -> {
+                    List<ExcelDataRow> c = new ArrayList<>(e.getValue());return c; })
                 .collect(Collectors.toList());
         //groupedByDate.sort(Comparator.comparing(e -> e.get(0).getDate()));
+
+        //Collections.sort(groupedByDate, Comparator.comparing(a -> a.get(0).getDate()));
 
         for (List<ExcelDataRow> row: groupedByDate) {
             List<List<ExcelDataRow>> groupedBySerialNumber = row.stream()
                     .collect(Collectors.groupingBy(ExcelDataRow::getTagSerialNumber))
                     .entrySet().stream()
-                    .map(e -> { List<ExcelDataRow> c = new ArrayList<>(); c.addAll(e.getValue()); return c; })
+                    .map(e -> {
+                        List<ExcelDataRow> c = new ArrayList<>(e.getValue());
+                        return c; })
                     .collect(Collectors.toList());
-            groupedBySerialNumber.sort(Comparator.comparing(e -> new Date(e.get(0).getDate())));
-            sortedFinal.add(groupedBySerialNumber);
+
+            sortedFinal.add(new Day(dateFromString(row.get(0).getDate()), row.get(0).getControlStation(), groupedBySerialNumber));
         }
+
+        Collections.sort(sortedFinal, Comparator.comparing(s -> s.date));
+
+        //Collections.sort(groupedByDate, Comparator.comparing(a -> a.get(0).getDate()));
 
         Instant end = Instant.now();
         Log.d(TAG,"sorting time "+humanReadableFormat(Duration.between(start, end)));
@@ -131,7 +145,7 @@ public class XLSXParser {
             for (Row currentRow : sheet) {
                 //Log.d(TAG,"reading...");
                 i++;
-                if(i < 3) continue;//skip header
+                //if(i < 3) continue;//skip header
                 List<String> data = new ArrayList<>();
                 for (Cell currentCell : currentRow) {
                     data.add(df.formatCellValue(currentCell));
@@ -141,10 +155,14 @@ public class XLSXParser {
 
                 if(data.size() < 4) continue;
 
+                String date = data.get(0);
+                DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
+                Date startDate = dateFormat.parse(date);
+
                 if(spreadSheetType == 1) {
                     if(data.get(3).length() != 11 && isNumeric(data.get(6))) continue;
                     try{
-                        result.add(new ExcelDataRow(data.get(0), data.get(1), Long.parseLong(data.get(2)), Long.valueOf(data.get(3)),
+                        result.add(new ExcelDataRow(prettyDate(startDate), data.get(1), Long.parseLong(data.get(2)), Long.valueOf(data.get(3)),
                                 data.get(4), data.get(5), Integer.valueOf(data.get(6))));
                     }catch (NumberFormatException e){
                         Log.e(TAG,"error while parsing data type="+spreadSheetType+" data="+data, e);
@@ -155,7 +173,7 @@ public class XLSXParser {
                 if(spreadSheetType == 2){
                         if(data.get(4).length() != 11 && isNumeric(data.get(8)) ) continue;
                         try{
-                            result.add(new ExcelDataRow(data.get(0), data.get(1), Long.parseLong(data.get(2)), Integer.valueOf(data.get(3)),
+                            result.add(new ExcelDataRow(prettyDate(startDate), data.get(1), Long.parseLong(data.get(2)), Integer.valueOf(data.get(3)),
                                     Long.valueOf(data.get(4)), data.get(5),
                                     data.get(6), data.get(7),
                                     Integer.valueOf(data.get(8)), data.get(9),
@@ -171,7 +189,7 @@ public class XLSXParser {
                 }
 
             }
-        } catch (NullPointerException | IndexOutOfBoundsException| IOException e) {
+        } catch (NullPointerException | IndexOutOfBoundsException | ParseException | IOException e) {
             Log.e(TAG, "error while parsing xlsx file", e);
             writeToLogFile("error while parsing data type="+spreadSheetType+" e="+e.getMessage()+" filepath="+filePath);
         }

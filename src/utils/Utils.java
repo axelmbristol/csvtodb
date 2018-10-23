@@ -4,9 +4,14 @@ import org.apache.commons.io.FileUtils;
 import trikita.log.Log;
 
 import java.io.*;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Created by Axel on 05/10/2018.
@@ -33,6 +38,21 @@ public class Utils {
             Log.e(TAG,"error while getting file paths in directory", e);
         }
         return paths;
+    }
+
+    public static String prettyDate(Date date){
+        return new SimpleDateFormat("dd/MM/yy").format(date);
+    }
+
+    public static Date dateFromString(String string){
+        DateFormat format = new SimpleDateFormat("dd/MM/yy");
+        Date date = null;
+        try {
+            date = format.parse(string);
+        } catch (ParseException e) {
+            Log.e(TAG,"error while getting date", e);
+        }
+        return date;
     }
 
     static String humanReadableFormat(Duration duration) {

@@ -8,7 +8,9 @@ import com.mongodb.MongoWriteException;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.InsertOneOptions;
 import com.mongodb.client.model.Updates;
+import entities.Day;
 import entities.ExcelDataRow;
 import org.bson.BsonMaximumSizeExceededException;
 import org.bson.Document;
@@ -20,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.mongodb.client.model.Filters.eq;
+import static utils.Utils.prettyDate;
 
 
 /**
@@ -49,7 +52,7 @@ public class DataBase {
 
     public void init(ExcelDataRow excelDataRow){
         Document farmDocument = createFarmDocument(excelDataRow);
-        collectionName = "_"+farmDocument.get("control_station")+"-"+excelDataRow.getDate().split(" ")[0]; //need _ for MongoDB collection syntax convention.
+        collectionName = "_"+farmDocument.get("control_station")+"-"+excelDataRow.getDate(); //need _ for MongoDB collection syntax convention.
         currCollection = database.getCollection(collectionName);
         if(!isCollectionExists(collectionName)){
             Log.d(TAG,"creating new farm collection."+collectionName+" "+farmDocument);
@@ -93,25 +96,23 @@ public class DataBase {
         }
     }
 
-    public void addEntry(List<List<ExcelDataRow>> day, String dataBaseName){
+    public void addEntry(Day day, String dataBaseName){
 
         database = mongoClient.getDatabase(dataBaseName);
 
         List<BasicDBObject> animals = new ArrayList<>();
-        for (List<ExcelDataRow> animal : day){
+        for (List<ExcelDataRow> animal : day.data){
             List<BasicDBObject> tags = new ArrayList<>();
             for (ExcelDataRow entryRow : animal){
                 tags.add(createTagDocument(entryRow));
             }
-            animals.add(new BasicDBObject("_id", animal.get(0).getTagSerialNumber())
-                            .append("serial_number", animal.get(0).getTagSerialNumber())
+            animals.add(new BasicDBObject("serial_number", animal.get(0).getTagSerialNumber())
                             .append("tag_data", tags));
         }
 
-        ExcelDataRow row = day.get(0).get(0);
-        collectionName = "_"+row.getControlStation()+"-"+row.getDate().split(" ")[0];
+        collectionName = "_"+day.controlStation+"_"+day.epoch+"_"+day.prettyDate;
 
-        Document farmDocument = new Document("control_station", row.getControlStation())
+        Document farmDocument = new Document("control_station", day.controlStation)
                 .append("animals", animals);
 
         try{
@@ -123,9 +124,9 @@ public class DataBase {
 
             List<List<BasicDBObject>> split = Lists.partition(animals, (animals.size()/2)+1);
             for (int i = 0; i < split.size(); i++){
-                Document doc = new Document("control_station", row.getControlStation())
+                Document doc = new Document("control_station", day.controlStation)
                         .append("animals", split.get(i));
-                collectionName = "_"+row.getControlStation()+"-"+row.getDate().split(" ")[0]+"-"+i;
+                collectionName = "_"+day.controlStation+"_"+day.epoch+"_"+day.prettyDate+"_"+i;
                 Log.d(TAG,"splitting collection new collection="+collectionName);
                 database.getCollection(collectionName).insertOne(doc);
             }
