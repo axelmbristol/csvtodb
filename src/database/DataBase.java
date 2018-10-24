@@ -128,7 +128,12 @@ public class DataBase {
                         .append("animals", split.get(i));
                 collectionName = "_"+day.controlStation+"_"+day.epoch+"_"+day.prettyDate+"_"+i;
                 Log.d(TAG,"splitting collection new collection="+collectionName);
-                database.getCollection(collectionName).insertOne(doc);
+                try {
+                    database.getCollection(collectionName).insertOne(doc);
+                }catch (BsonMaximumSizeExceededException v){
+                    Log.e(TAG,"error while trying to add entry.",v);
+                }
+
             }
         }
     }
