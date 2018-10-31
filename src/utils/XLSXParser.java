@@ -1,6 +1,7 @@
 package utils;
 
-import database.DataBase;
+import database.CassandraDataBase;
+import database.MongoDataBase;
 import entities.Day;
 import entities.ExcelDataRow;
 import org.apache.poi.openxml4j.exceptions.NotOfficeXmlFileException;
@@ -39,7 +40,8 @@ public class XLSXParser {
         List<String> logs = new ArrayList<>();
 
         if(files.size() > 0){
-            DataBase dataBase = new DataBase();
+            //MongoDataBase dataBase = new MongoDataBase();
+            CassandraDataBase cassandraDataBase = new CassandraDataBase();
             //Log.d(TAG,"new db created dbName="+dbName);
 
             try {
@@ -48,10 +50,15 @@ public class XLSXParser {
                 for (String path: files) {
                     Instant startCurrFileProcessing = Instant.now();
                     List<ExcelDataRow> entries = parse(path);
+
+
+                    cassandraDataBase.addEntry(entries);
+
+
                     List<Day> groups = groupEntries(entries);
 
                     for(Day day : groups){
-                        dataBase.addEntry(day, day.data.get(0).get(0).getControlStation().toString());
+                        //dataBase.addEntry(day, day.data.get(0).get(0).getControlStation().toString());
                     }
                     currFileEntry++;
                     endEntryProcessing = Instant.now();
