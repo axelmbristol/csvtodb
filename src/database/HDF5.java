@@ -1,16 +1,15 @@
-package utils;
+package database;
 
 import entities.ExcelDataRow;
-import trikita.log.Log;
 import as.hdfql.*;
 import java.util.List;
 
-public class H5CreateFile {
+public class HDF5 {
 
-    private static String TAG = H5CreateFile.class.getName();
+    private static String TAG = HDF5.class.getName();
 
 
-    public H5CreateFile(String fileName) {
+    public HDF5(String fileName) {
         // load HDFql shared library (make sure it can be found by the JVM)
         System.loadLibrary("HDFql");
 

@@ -95,7 +95,7 @@ public class CassandraDataBase {
                     }
 
             );
-        }catch (TransportException | OperationTimedOutException| ServerError| NoHostAvailableException| WriteTimeoutException e){
+        }catch (NullPointerException | TransportException | OperationTimedOutException| ServerError| NoHostAvailableException| WriteTimeoutException e){
             session = cluster.connect();
             Log.e(TAG,"error while adding entry in database.",e);
             Log.d(TAG,"try to reconnect...");

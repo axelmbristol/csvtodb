@@ -1,11 +1,11 @@
 package utils;
 
 import database.CassandraDataBase;
+import database.HDF5;
 import database.MongoDataBase;
 import entities.Day;
 import entities.ExcelDataRow;
 import org.apache.poi.openxml4j.exceptions.NotOfficeXmlFileException;
-import org.apache.poi.ss.formula.functions.T;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import trikita.log.Log;
@@ -100,7 +100,7 @@ public class XLSXParser {
 
                     case 2:
                         Log.d(TAG,"database type 2 -> hdf5.");
-                        H5CreateFile h5 = new H5CreateFile("data.h5");
+                        HDF5 h5 = new HDF5("data.h5");
                         for (String path: files) {
                             Instant startCurrFileProcessing = Instant.now();
                             List<ExcelDataRow> entries = parse(path);
