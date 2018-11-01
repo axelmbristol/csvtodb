@@ -5,6 +5,7 @@ import database.MongoDataBase;
 import entities.Day;
 import entities.ExcelDataRow;
 import org.apache.poi.openxml4j.exceptions.NotOfficeXmlFileException;
+import org.apache.poi.ss.formula.functions.T;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import trikita.log.Log;
@@ -32,47 +33,75 @@ public class XLSXParser {
 
     private static double ENTRY_COUNT = 0.0;
     private static int spreadSheetType = 0;
+    private static double transferedRowCount = 0.0;
 
-    public static void init(String dirPath, String dbName){
+    public static void init(String dirPath, int type){
         Log.d(TAG,"init...");
         writeToLogFile("init");
         List<String> files = findAllFilesWithExt(dirPath);
         List<String> logs = new ArrayList<>();
 
         if(files.size() > 0){
-            //MongoDataBase dataBase = new MongoDataBase();
-            CassandraDataBase cassandraDataBase = new CassandraDataBase();
-            //Log.d(TAG,"new db created dbName="+dbName);
 
             try {
+
                 double currFileEntry = 0;
                 Instant startEntryProcessing = Instant.now(); Instant endEntryProcessing;
-                for (String path: files) {
-                    Instant startCurrFileProcessing = Instant.now();
-                    List<ExcelDataRow> entries = parse(path);
+                switch (type){
+                    case 0:
+                        Log.d(TAG,"database type 0 -> MongoDB.");
+                        MongoDataBase dataBase = new MongoDataBase();
+                        //Log.d(TAG,"new db created dbName="+dbName);
+                        for (String path: files) {
+                            Instant startCurrFileProcessing = Instant.now();
+                            List<ExcelDataRow> entries = parse(path);
+                            List<Day> groups = groupEntries(entries);
+                            for (Day day : groups) {
+                                dataBase.addEntry(day, day.data.get(0).get(0).getControlStation().toString());
+                            }
+                            currFileEntry++;
+                            endEntryProcessing = Instant.now();
+                            System.out.println(String.format("progress: %.0f/%.0f  %d%%  %s %d", currFileEntry, (float) files.size(),
+                                    (int) ((currFileEntry / files.size()) * 100.0),
+                                    humanReadableFormat(Duration.between(startEntryProcessing, endEntryProcessing)), (int)transferedRowCount));
 
+                            Instant endCurrFileProcessing = Instant.now();
+                            String log = String.format("%s to process file %s",
+                                    humanReadableFormat(Duration.between(startCurrFileProcessing, endCurrFileProcessing)), path);
+                            logs.add(log);
+                            writeToLogFile(log);
+                            transferedRowCount += entries.size();
+                            entries.clear();
+                            groups.clear();
+                        }
+                    case 1:
+                        Log.d(TAG,"database type 1 -> Cassandra.");
+                        //MongoDataBase dataBase = new MongoDataBase();
+                        CassandraDataBase cassandraDataBase = new CassandraDataBase();
+                        //Log.d(TAG,"new db created dbName="+dbName);
+                        for (String path: files) {
+                            Instant startCurrFileProcessing = Instant.now();
+                            List<ExcelDataRow> entries = parse(path);
+                            cassandraDataBase.addEntry(entries);
+                            transferedRowCount += entries.size();
+                            currFileEntry++;
+                            endEntryProcessing = Instant.now();
+                            System.out.println(String.format("progress: %.0f/%.0f  %d%%  %s  %d", currFileEntry, (float)files.size(),
+                                    (int)((currFileEntry/files.size())*100.0),
+                                    humanReadableFormat(Duration.between(startEntryProcessing, endEntryProcessing)), (int)transferedRowCount));
 
-                    cassandraDataBase.addEntry(entries);
+                            Instant endCurrFileProcessing = Instant.now();
+                            String log = String.format("%s to process file %s",
+                                    humanReadableFormat(Duration.between(startCurrFileProcessing, endCurrFileProcessing)), path);
+                            logs.add(log);
+                            writeToLogFile(log);
+                            entries.clear();
+                        }
 
+                    default:
+                        Log.d(TAG,"database type deafault.");
+                        break;
 
-                    List<Day> groups = groupEntries(entries);
-
-                    for(Day day : groups){
-                        //dataBase.addEntry(day, day.data.get(0).get(0).getControlStation().toString());
-                    }
-                    currFileEntry++;
-                    endEntryProcessing = Instant.now();
-                    System.out.println(String.format("progress: %.0f/%.0f  %d%%  %s", currFileEntry, (float)files.size(),
-                            (int)((currFileEntry/files.size())*100.0), humanReadableFormat(Duration.between(startEntryProcessing, endEntryProcessing))));
-
-
-                    Instant endCurrFileProcessing = Instant.now();
-                    String log = String.format("%s to process file %s",
-                            humanReadableFormat(Duration.between(startCurrFileProcessing, endCurrFileProcessing)), path);
-                    logs.add(log);
-                    writeToLogFile(log);
-                    entries.clear();
-                    groups.clear();
                 }
             }catch (OutOfMemoryError e){
                 Log.e(TAG,"error while processing file", e);
@@ -83,7 +112,7 @@ public class XLSXParser {
             for (String log: logs) {
                 System.out.println(log);
             }
-
+            System.out.println("total treated row count ="+ (int)transferedRowCount);
             System.out.println("*******************************************");
         }else {
             Log.i(TAG,String.format("no files found in directory:\n%s",dirPath));

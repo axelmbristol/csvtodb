@@ -2,11 +2,11 @@ package utils;
 
 public class Args {
     public String inputDirPath;
-    public String dbName;
+    public int type;
     public boolean debug;
-    public Args(String inputDirPath, String dbName, boolean debug) {
+    public Args(String inputDirPath, int type, boolean debug) {
         this.inputDirPath = inputDirPath;
-        this.dbName = dbName;
+        this.type = type;
         this.debug = debug;
     }
 }

@@ -13,10 +13,10 @@ public class Main {
                 "|_____|_____|\\___/  |_| |_____|____/|_____|\n" +
                 "                                           ");
         System.out.println("Accitrack spreadsheet parser.\n" +
-                "This program transfers the data stored in excel format to a MongoDB database.");
+                "This program transfers the data stored in excel format to a MongoDB or Cassandra database.");
         System.out.println("Axel Montout @ University of bristol. Copyright 2018.\n");
         Args arguments = initCommandParser(args);
-        XLSXParser.init(arguments.inputDirPath,arguments.dbName);
+        XLSXParser.init(arguments.inputDirPath, arguments.type);
     }
 
     private static Args initCommandParser(String[] args){
@@ -24,9 +24,9 @@ public class Main {
         Option input = new Option("dir", "directory", true, "input directory path.");
         input.setRequired(true);
         options.addOption(input);
-        Option dbName = new Option("n", "name", true, "name of mongoDB database.");
-        dbName.setRequired(true);
-        options.addOption(dbName);
+        Option dbType = new Option("t", "type", true, "type of database 0 for MongoDB 1 for Cassandra.");
+        dbType.setRequired(true);
+        options.addOption(dbType);
         Option output = new Option("d", "debug", false, "enables log output.");
         output.setRequired(false);
         options.addOption(output);
@@ -39,7 +39,7 @@ public class Main {
             formatter.printHelp("csvtodb", options);
             System.exit(1);
         }
-        return new Args(cmd.getOptionValue("directory") , cmd.getOptionValue("name"),
+        return new Args(cmd.getOptionValue("directory") , Integer.valueOf(cmd.getOptionValue("type")),
                 (cmd.hasOption('d')| cmd.hasOption("debug")));
     }
 }
