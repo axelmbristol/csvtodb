@@ -98,6 +98,29 @@ public class XLSXParser {
                             entries.clear();
                         }
 
+                    case 2:
+                        Log.d(TAG,"database type 2 -> hdf5.");
+                        H5CreateFile h5 = new H5CreateFile("data.h5");
+                        for (String path: files) {
+                            Instant startCurrFileProcessing = Instant.now();
+                            List<ExcelDataRow> entries = parse(path);
+                            h5.addEntry(entries);
+                            transferedRowCount += entries.size();
+                            currFileEntry++;
+                            endEntryProcessing = Instant.now();
+                            System.out.println(String.format("progress: %.0f/%.0f  %d%%  %s  %d", currFileEntry, (float)files.size(),
+                                    (int)((currFileEntry/files.size())*100.0),
+                                    humanReadableFormat(Duration.between(startEntryProcessing, endEntryProcessing)), (int)transferedRowCount));
+
+                            Instant endCurrFileProcessing = Instant.now();
+                            String log = String.format("%s to process file %s",
+                                    humanReadableFormat(Duration.between(startCurrFileProcessing, endCurrFileProcessing)), path);
+                            logs.add(log);
+                            writeToLogFile(log);
+                            entries.clear();
+                            break;
+                        }
+
                     default:
                         Log.d(TAG,"database type deafault.");
                         break;
@@ -281,6 +304,7 @@ public class XLSXParser {
                 }
 
             }
+            workbook.close();
         } catch (NullPointerException  | IndexOutOfBoundsException | NotOfficeXmlFileException | IOException e) {
             Log.e(TAG, "error while parsing xlsx file", e);
             writeToLogFile("error while parsing data type="+spreadSheetType+" e="+e.getMessage()+" filepath="+filePath);
