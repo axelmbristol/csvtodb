@@ -164,13 +164,16 @@ public class XLSXParser {
                     .entrySet().stream()
                     .map(e -> {
                         List<ExcelDataRow> c = new ArrayList<>(e.getValue());
+                        c.sort(Comparator.comparing(ExcelDataRow::getEpoch));
                         return c; })
-                    .collect(Collectors.toList());
+                    .collect(
+                            Collectors.toList()
+                    );
 
             sortedFinal.add(new Day(dateFromString(row.get(0).getDate()), row.get(0).getControlStation(), groupedBySerialNumber));
         }
 
-        Collections.sort(sortedFinal, Comparator.comparing(s -> s.date));
+        Collections.sort(sortedFinal, Comparator.comparing(s -> s.epoch));
 
         //Collections.sort(groupedByDate, Comparator.comparing(a -> a.get(0).getDate()));
 

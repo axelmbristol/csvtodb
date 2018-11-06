@@ -2,8 +2,10 @@ package entities;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
-import org.jetbrains.annotations.NotNull;
+import trikita.log.Log;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
@@ -11,6 +13,7 @@ import java.util.Date;
  * class rfid tag
  */
 public class ExcelDataRow {
+    private static String TAG = ExcelDataRow.class.getName();
 
     @SerializedName("date")
     @Expose
@@ -61,6 +64,8 @@ public class ExcelDataRow {
     @Expose
     private Double fIELD16;
 
+    private Date epoch;
+
 
     public ExcelDataRow(String date, String time, Long controlStation, Integer type12TagMessages,
                         Long tagSerialNumber, String signalStrength,
@@ -83,6 +88,18 @@ public class ExcelDataRow {
         this.secondSensorValuesXYZ = secondSensorValuesXYZ;
         this.correlationIdentifier = correlationIdentifier;
         this.correlationValue = correlationValue;
+        this.epoch = computeEpoch();
+    }
+
+    private Date computeEpoch(){
+        String dateString= (this.date +" "+time);
+        try {
+            Date date=new SimpleDateFormat("dd/MM/yy hh:mm:ss a").parse(dateString);
+            return date;
+        } catch (ParseException e) {
+            Log.e(TAG,"error while getting epoch for "+dateString, e);
+            return null;
+        }
     }
 
     public ExcelDataRow(String date, String time, Long controlStation,
@@ -103,6 +120,7 @@ public class ExcelDataRow {
         this.secondSensorValuesXYZ = null;
         this.correlationIdentifier = null;
         this.correlationValue = null;
+        this.epoch = computeEpoch();
     }
 
     public String getDate() {
@@ -160,7 +178,8 @@ public class ExcelDataRow {
     @Override
     public String toString() {
 
-        return "{date:"+this.date
+        return "{epoch:"+this.epoch
+                +",date:"+this.date
                 +",time:"+this.time
                 +",controlStation:"+this.controlStation
                 +",tagSerialNumber:"+this.tagSerialNumber
@@ -177,4 +196,7 @@ public class ExcelDataRow {
 //                this.date, this.time, this.controlStation);
     }
 
+    public Date getEpoch() {
+        return epoch;
+    }
 }
