@@ -8,10 +8,13 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
+import java.time.LocalTime;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by Axel on 05/10/2018.
@@ -21,12 +24,20 @@ public class Utils {
 
     private static String TAG = Utils.class.getName();
 
+    public static boolean isTimeValid(String input){
+        Pattern pattern = Pattern.compile("(1[012]|[1-9]):[0-5][0-9]:[0-5][0-9] ?(?i)(am|pm)");
+        Matcher matcher = pattern.matcher(input);
+        boolean isValid = matcher.find();
+        //Log.d(TAG,"is "+input+" valid ? "+isValid);
+        return isValid;
+    }
+
     static List<String> findAllFilesWithExt(String dirPath){
         List<String> paths = new ArrayList<>();
         try {
             File dir = new File(dirPath);
-            String[] extensions = new String[] { "xlsx", "csv" };
-            Log.d(TAG,"Getting all .xlsx and .csv files in " + dir.getCanonicalPath()
+            String[] extensions = new String[] { "xlsx" };
+            Log.d(TAG,"Getting all .xlsx files in " + dir.getCanonicalPath()
                     + " including those in subdirectories");
             List<File> files = (List<File>) FileUtils.listFiles(dir, extensions, true);
             for (File file : files) {
@@ -62,7 +73,7 @@ public class Utils {
                 .toLowerCase();
     }
 
-    static boolean isNumeric(String str)
+    public static boolean isNumeric(String str)
     {
         try
         {
@@ -74,6 +85,8 @@ public class Utils {
         }
         return true;
     }
+
+
 
     public static void writeToLogFile(String input){
         PrintWriter out = null;

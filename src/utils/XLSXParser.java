@@ -185,7 +185,7 @@ public class XLSXParser {
     private static int getSpreadSheetDataType(String inputDate){
         try {
             String year = inputDate.split(" ")[0].split("/")[2];
-            return ((Integer.valueOf(year) > 13)? 2:1);
+            return ((Integer.valueOf(year) >= 13)? 2:1);
         }catch (ArrayIndexOutOfBoundsException e){
             return 1;
         }
@@ -211,7 +211,7 @@ public class XLSXParser {
 
                 Instant end2 = Instant.now();
                 Log.d(TAG, "reading time " + humanReadableFormat(Duration.between(start2, end2)));
-                Log.d(TAG, "start parsing...");
+                Log.d(TAG, "start parsing "+filePath);
                 int i = 0;
 
                 spreadSheetType = getSpreadSheetDataType(df.formatCellValue(sheet.getRow(4).getCell(0)));
@@ -246,28 +246,33 @@ public class XLSXParser {
                             //Log.d(TAG,"add data to result");
                             try {
                                 result.add(new ExcelDataRow(prettyDate(startDate), data.get(1), Long.parseLong(data.get(2)), Long.valueOf(data.get(3)),
-                                        null, null, Integer.valueOf(data.get(4))));
+                                        null, null, Integer.valueOf(data.get(4)), filePath));
                             } catch (NumberFormatException | IndexOutOfBoundsException e) {
                                 Log.e(TAG, "error while parsing data type=" + spreadSheetType + " data=" + data, e);
                                 //writeToLogFile("error while parsing data type="+spreadSheetType+" data="+data+" e="+e.getMessage()+" filepath="+filePath);
                                 continue;
                             }
                         } else {
-                            if (data.get(3).length() != 11 && isNumeric(data.get(6))) continue;
+                            if (data.get(3).length() != 11 | !isNumeric(data.get(6)) | !isTimeValid(data.get(1))){
+                                Log.d(TAG,"invalid data "+data);
+                                continue;
+                            }
                             try {
                                 result.add(new ExcelDataRow(prettyDate(startDate), data.get(1), Long.parseLong(data.get(2)), Long.valueOf(data.get(3)),
-                                        data.get(4), data.get(5), Integer.valueOf(data.get(6))));
+                                        data.get(4), data.get(5), Integer.valueOf(data.get(6)), filePath));
                             } catch (NumberFormatException | IndexOutOfBoundsException e) {
                                 Log.e(TAG, "error while parsing data type=" + spreadSheetType + " data=" + data, e);
                                 writeToLogFile("error while parsing data type=" + spreadSheetType + " data=" + data + " e=" + e.getMessage() + " filepath=" + filePath);
                                 continue;
                             }
                         }
-
-
                     }
+
                     if (spreadSheetType == 2) {
-                        if (data.get(4).length() != 11 && isNumeric(data.get(8))) continue;
+                        if (data.get(4).length() != 11 | !isNumeric(data.get(8)) | !isTimeValid(data.get(1))) {
+                            Log.d(TAG,"invalid data "+data);
+                            continue;
+                        }
                         if (data.size() == 11) {
                             //Log.d(TAG,"add data to result");
                             try {
@@ -279,7 +284,8 @@ public class XLSXParser {
                                         data.get(10),
                                         data.get(10),
                                         "",
-                                        null
+                                        null,
+                                        filePath
                                 ));
                             } catch (NumberFormatException | IndexOutOfBoundsException e) {
                                 Log.e(TAG, "error while parsing data type=" + spreadSheetType + " data=" + data + " file=" + filePath, e);
@@ -293,7 +299,8 @@ public class XLSXParser {
                                         data.get(6), data.get(7),
                                         Integer.valueOf(data.get(8)), data.get(9),
                                         data.get(10), data.get(11),
-                                        Integer.valueOf(data.get(12))
+                                        Integer.valueOf(data.get(12)),
+                                        filePath
                                 ));
                             } catch (NumberFormatException | IndexOutOfBoundsException e) {
                                 Log.e(TAG, "error while parsing data type=" + spreadSheetType + " data=" + data + " file=" + filePath, e);

@@ -65,6 +65,7 @@ public class ExcelDataRow {
     private Double fIELD16;
 
     private Date epoch;
+    private String path;
 
 
     public ExcelDataRow(String date, String time, Long controlStation, Integer type12TagMessages,
@@ -72,9 +73,10 @@ public class ExcelDataRow {
                         String batteryVoltage, String firstAccelerometerCounter,
                         Integer firstSensorValue, String secondAccelerometerCounter,
                         String secondSensorValuesXYZ, String correlationIdentifier,
-                        Integer correlationValue
+                        Integer correlationValue, String path
 
     ) {
+        this.path = path;
         this.date = date;
         this.time = time;
         this.controlStation = controlStation;
@@ -94,19 +96,20 @@ public class ExcelDataRow {
     private Date computeEpoch(){
         String dateString= (this.date +" "+time);
         try {
-            Date date=new SimpleDateFormat("dd/MM/yy hh:mm:ss a").parse(dateString);
-            return date;
+            return new SimpleDateFormat("dd/MM/yy hh:mm:ss a").parse(dateString);
         } catch (ParseException e) {
-            Log.e(TAG,"error while getting epoch for "+dateString, e);
+            Log.e(TAG,"error while getting epoch for "+this, e);
             return null;
         }
     }
 
     public ExcelDataRow(String date, String time, Long controlStation,
                         Long tagSerialNumber, String signalStrength,
-                        String batteryVoltage, Integer activityLevel
+                        String batteryVoltage, Integer activityLevel,
+                        String path
 
     ) {
+        this.path = path;
         this.date = date;
         this.time = time;
         this.controlStation = controlStation;
@@ -189,7 +192,8 @@ public class ExcelDataRow {
                 +",firstAccelerometerCounter:"+this.firstAccelerometerCounter
                 +",firstSensorValue:"+this.firstSensorValue
                 +",secondAccelerometerCounter:"+this.secondAccelerometerCounter
-                +",secondSensorValuesXYZ:"+this.secondSensorValuesXYZ+"}";
+                +",secondSensorValuesXYZ:"+this.secondSensorValuesXYZ
+                +",path:"+this.path+"}";
 
 //        return String.format(
 //                "ExcelDataRow[date=%s, time='%s', controlStation='%s']",
